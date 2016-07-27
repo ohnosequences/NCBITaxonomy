@@ -1,8 +1,8 @@
 Nice.scalaProject
 
-name          := "NCBITaxonomy"
+name          := "ncbitaxonomy"
 organization  := "ohnosequences"
-description   := "NCBITaxonomy project"
+description   := "ncbitaxonomy project"
 
 bucketSuffix  := "era7.com"
 
