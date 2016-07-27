@@ -1,14 +1,12 @@
-package ohnosequences.ncbitaxonomy
+  package ohnosequences.ncbitaxonomy
 
 import ohnosequences.statika._
 import ohnosequences.awstools.s3._
 import ohnosequencesBundles.statika._
-
-import com.thinkaurelius.titan.core._
-import com.bio4j.titan.model.ncbiTaxonomy._
+import com.thinkaurelius.titan.core.TitanFactory
 import com.bio4j.titan.util.DefaultTitanGraph
 import org.apache.commons.configuration.Configuration
-
+import com.bio4j.titan.model.ncbiTaxonomy.TitanNCBITaxonomyGraph
 
 case object ncbiTaxonomyBundle extends AnyBio4jDist {
 
