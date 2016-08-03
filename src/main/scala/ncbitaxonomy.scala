@@ -4,7 +4,29 @@ import com.bio4j.titan.model.ncbiTaxonomy.TitanNCBITaxonomyGraph
 
 case object api {
 
-  implicit final class Graph(val graph: TitanNCBITaxonomyGraph) extends AnyVal {
+  trait TaxonomyGraph[V] extends Any {
+
+    def getNode(id: String): Option[V]
+    def root: V
+  }
+
+  trait Taxon[V] extends Any {
+
+    def v: V
+
+    def       id: String
+    def     name: String
+    def rankName: String
+    /* Note that this is an option because the root has no parent */
+    def   parent: Option[V]
+    def rankNumber: Int
+
+    final def rank: String = s"${this.rankNumber}: ${this.rankName}"
+
+    def ancestors: Seq[V]
+  }
+
+  implicit final class ncbiTitanGraph(val graph: TitanNCBITaxonomyGraph) extends AnyVal with TaxonomyGraph[Node] {
 
     def getNode(id: String): Option[Node] =
       optional(graph.nCBITaxonIdIndex.getVertex(id))
@@ -14,7 +36,10 @@ case object api {
       getNode(1.toString).get
   }
 
-  implicit final class Taxon(val node: Node) extends AnyVal {
+  implicit final class ncbiTitanTaxon(val node: Node) extends AnyVal with Taxon[Node] {
+
+    type V = Node
+    def v = node
 
     def       id: String = node.id()
     def     name: String = Option( node.name() ).getOrElse("")
@@ -47,8 +72,6 @@ case object api {
         case _                  => parent.fold(0){ _.rankNumber } + 1
       }
 
-    def rank: String = s"${this.rankNumber}: ${this.rankName}"
-
     def ancestors: Ancestors = {
 
       @annotation.tailrec
@@ -62,11 +85,11 @@ case object api {
     }
   }
 
-  implicit final class Taxa(val nodes: Traversable[Node]) extends AnyVal {
+  implicit final class Taxa[V](val nodes: Traversable[V]) extends AnyVal {
 
-    def lowestCommonAncestor(graph: TitanNCBITaxonomyGraph): Node = {
+    def lowestCommonAncestor(graph: TaxonomyGraph[V])(implicit conv: V => Taxon[V]): V = {
 
-      def longestCommonPrefix(path1: Ancestors, path2: Ancestors): Ancestors = {
+      def longestCommonPrefix(path1: Seq[V], path2: Seq[V]): Seq[V] = {
         (path1 zip path2)
           .takeWhile { case (n1, n2) =>
             n1.id == n2.id
