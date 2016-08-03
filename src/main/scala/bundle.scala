@@ -1,4 +1,4 @@
-  package ohnosequences.ncbitaxonomy
+package ohnosequences.ncbitaxonomy
 
 import ohnosequences.statika._
 import ohnosequences.awstools.s3._

@@ -1,51 +1,29 @@
 package ohnosequences.ncbitaxonomy
 
+import api._
 import com.bio4j.titan.model.ncbiTaxonomy.TitanNCBITaxonomyGraph
 
-case object api {
+case object titan {
 
-  trait TaxonomyGraph[V] extends Any {
+  implicit final class ncbiTitanGraph(val graph: TitanNCBITaxonomyGraph) extends AnyVal with TaxonomyGraph[TitanNode] {
 
-    def getNode(id: String): Option[V]
-    def root: V
-  }
-
-  trait Taxon[V] extends Any {
-
-    def v: V
-
-    def       id: String
-    def     name: String
-    def rankName: String
-    /* Note that this is an option because the root has no parent */
-    def   parent: Option[V]
-    def rankNumber: Int
-
-    final def rank: String = s"${this.rankNumber}: ${this.rankName}"
-
-    def ancestors: Seq[V]
-  }
-
-  implicit final class ncbiTitanGraph(val graph: TitanNCBITaxonomyGraph) extends AnyVal with TaxonomyGraph[Node] {
-
-    def getNode(id: String): Option[Node] =
+    def getTaxon(id: String): Option[TitanNode] =
       optional(graph.nCBITaxonIdIndex.getVertex(id))
 
     // NOTE the root will always be there. Would be nice to have this in bio4j
-    def root: Node =
-      getNode(1.toString).get
+    def root: TitanNode =
+      getTaxon(1.toString).get
   }
 
-  implicit final class ncbiTitanTaxon(val node: Node) extends AnyVal with Taxon[Node] {
+  implicit final class ncbiTitanTaxon(val node: TitanNode) extends AnyVal with Taxon[TitanNode] {
 
-    type V = Node
     def v = node
 
     def       id: String = node.id()
     def     name: String = Option( node.name() ).getOrElse("")
     def rankName: String = Option( node.taxonomicRank() ).getOrElse("")
     /* Note that this is an option because the root has no parent */
-    def   parent: Option[Node] = optional(node.ncbiTaxonParent_inV)
+    def   parent: Option[TitanNode] = optional(node.ncbiTaxonParent_inV)
 
     def rankNumber: Int =
       rankName.trim.toLowerCase match {
@@ -72,35 +50,16 @@ case object api {
         case _                  => parent.fold(0){ _.rankNumber } + 1
       }
 
-    def ancestors: Ancestors = {
+    def ancestors: Seq[TitanNode] = {
 
       @annotation.tailrec
-      def ancestors_rec(n: Node, acc: Ancestors): Ancestors =
+      def ancestors_rec(n: TitanNode, acc: Seq[TitanNode]): Seq[TitanNode] =
         n.parent match {
           case None     => n +: acc
           case Some(p)  => ancestors_rec(p, n +: acc)
         }
 
       ancestors_rec(node, Seq())
-    }
-  }
-
-  implicit final class Taxa[V](val nodes: Traversable[V]) extends AnyVal {
-
-    def lowestCommonAncestor(graph: TaxonomyGraph[V])(implicit conv: V => Taxon[V]): V = {
-
-      def longestCommonPrefix(path1: Seq[V], path2: Seq[V]): Seq[V] = {
-        (path1 zip path2)
-          .takeWhile { case (n1, n2) =>
-            n1.id == n2.id
-          }.map { _._1 }
-      }
-
-      nodes
-        .map(_.ancestors)
-        .reduceOption(longestCommonPrefix)
-        .flatMap(_.lastOption)
-        .getOrElse(graph.root)
     }
   }
 }

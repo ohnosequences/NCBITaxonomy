@@ -7,10 +7,7 @@ import com.bio4j.titan.util.DefaultTitanGraph
 
 package object ncbitaxonomy {
 
-  /* last element is the root, always non-empty */
-  type Ancestors = Seq[Node]
-
-  type Node =
+  type TitanNode =
     com.bio4j.model.ncbiTaxonomy.vertices.NCBITaxon[
       DefaultTitanGraph,
       TitanVertex, VertexLabelMaker,

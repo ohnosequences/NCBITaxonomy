@@ -15,5 +15,5 @@ scalacOptions ++= Seq("-Ybreak-cycles")
 
 /* because of Option#get */
 wartremoverExcluded ++= Seq(
-  baseDirectory.value/"src"/"main"/"scala"/"ncbitaxonomy.scala"
+  baseDirectory.value/"src"/"main"/"scala"/"titan.scala"
 )
