@@ -22,10 +22,10 @@ class NcbitaxonomyTest extends FunSuite {
 
 
 
-[test/scala/structuralTests.scala]: structuralTests.scala.md
-[test/scala/Ncbitaxonomy.scala]: Ncbitaxonomy.scala.md
-[test/scala/dummyTree.scala]: dummyTree.scala.md
-[main/scala/package.scala]: ../../main/scala/package.scala.md
 [main/scala/api.scala]: ../../main/scala/api.scala.md
-[main/scala/titan.scala]: ../../main/scala/titan.scala.md
 [main/scala/bundle.scala]: ../../main/scala/bundle.scala.md
+[main/scala/package.scala]: ../../main/scala/package.scala.md
+[main/scala/titan.scala]: ../../main/scala/titan.scala.md
+[test/scala/dummyTree.scala]: dummyTree.scala.md
+[test/scala/Ncbitaxonomy.scala]: Ncbitaxonomy.scala.md
+[test/scala/structuralTests.scala]: structuralTests.scala.md
