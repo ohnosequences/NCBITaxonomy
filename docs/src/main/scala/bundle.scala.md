@@ -29,10 +29,10 @@ case object ncbiTaxonomyBundle extends AnyBio4jDist {
 
 
 
-[test/scala/structuralTests.scala]: ../../test/scala/structuralTests.scala.md
-[test/scala/Ncbitaxonomy.scala]: ../../test/scala/Ncbitaxonomy.scala.md
-[test/scala/dummyTree.scala]: ../../test/scala/dummyTree.scala.md
-[main/scala/package.scala]: package.scala.md
 [main/scala/api.scala]: api.scala.md
-[main/scala/titan.scala]: titan.scala.md
 [main/scala/bundle.scala]: bundle.scala.md
+[main/scala/package.scala]: package.scala.md
+[main/scala/titan.scala]: titan.scala.md
+[test/scala/dummyTree.scala]: ../../test/scala/dummyTree.scala.md
+[test/scala/Ncbitaxonomy.scala]: ../../test/scala/Ncbitaxonomy.scala.md
+[test/scala/structuralTests.scala]: ../../test/scala/structuralTests.scala.md
