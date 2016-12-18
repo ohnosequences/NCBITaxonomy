@@ -4,8 +4,8 @@ description   := "A Scala wrapper for Bio4j NCBI taxonomy data and API"
 
 bucketSuffix  := "era7.com"
 
-libraryDependencies ++=  Seq(
-  "ohnosequences-bundles" %% "bio4j-dist" % "0.2.0"
+libraryDependencies ++= Seq(
+  "ohnosequences-bundles" %% "bio4j-dist" % "0.3.0"
 )
 
 scalacOptions ++= Seq("-Ybreak-cycles")
