@@ -1,8 +1,6 @@
 package ohnosequences
 
 import com.thinkaurelius.titan.core._, schema._
-import com.bio4j.model.ncbiTaxonomy._, vertices._
-import com.bio4j.titan.model.ncbiTaxonomy._
 import com.bio4j.titan.util.DefaultTitanGraph
 
 package object ncbitaxonomy {
