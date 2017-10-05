@@ -11,8 +11,8 @@ case object titan {
       optional(graph.nCBITaxonIdIndex.getVertex(id))
 
     // NOTE the root will always be there. Would be nice to have this in bio4j
-    def root: TitanNode =
-      getTaxon(1.toString).get
+    @SuppressWarnings(Array("org.wartremover.warts.OptionPartial"))
+    def root: TitanNode = getTaxon(1.toString).get
   }
 
   implicit final class ncbiTitanTaxon(val node: TitanNode) extends AnyVal with Taxon[TitanNode] {

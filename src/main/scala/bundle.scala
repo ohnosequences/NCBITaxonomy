@@ -1,6 +1,5 @@
 package ohnosequences.ncbitaxonomy
 
-import ohnosequences.statika._
 import ohnosequences.awstools.s3._
 import ohnosequencesBundles.statika._
 import com.thinkaurelius.titan.core.TitanFactory
