@@ -19,3 +19,4 @@ data/out/
 .atom*
 .ensime*
 .idea*
+/.gtm/
