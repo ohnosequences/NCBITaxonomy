@@ -5,7 +5,9 @@ import com.bio4j.titan.model.ncbiTaxonomy.TitanNCBITaxonomyGraph
 
 case object titan {
 
-  implicit final class ncbiTitanGraph(val graph: TitanNCBITaxonomyGraph) extends AnyVal with TaxonomyGraph[TitanNode] {
+  implicit final class ncbiTitanGraph(val graph: TitanNCBITaxonomyGraph)
+      extends AnyVal
+      with TaxonomyGraph[TitanNode] {
 
     def getTaxon(id: String): Option[TitanNode] =
       optional(graph.nCBITaxonIdIndex.getVertex(id))
@@ -15,15 +17,17 @@ case object titan {
     def root: TitanNode = getTaxon(1.toString).get
   }
 
-  implicit final class ncbiTitanTaxon(val node: TitanNode) extends AnyVal with Taxon[TitanNode] {
+  implicit final class ncbiTitanTaxon(val node: TitanNode)
+      extends AnyVal
+      with Taxon[TitanNode] {
 
     def v = node
 
-    def       id: String = node.id()
-    def     name: String = Option( node.name() ).getOrElse("")
-    def rankName: String = Option( node.taxonomicRank() ).getOrElse("")
+    def id: String       = node.id()
+    def name: String     = Option(node.name()).getOrElse("")
+    def rankName: String = Option(node.taxonomicRank()).getOrElse("")
     /* Note that this is an option because the root has no parent */
-    def   parent: Option[TitanNode] = optional(node.ncbiTaxonParent_inV)
+    def parent: Option[TitanNode] = optional(node.ncbiTaxonParent_inV)
 
     def rankNumber: Int =
       rankName.trim.toLowerCase match {
@@ -47,7 +51,7 @@ case object titan {
         case "species"          => 18
         case "subspecies"       => 19
         // "no rank"
-        case _                  => parent.fold(0){ _.rankNumber } + 1
+        case _ => parent.fold(0) { _.rankNumber } + 1
       }
 
     def ancestors: Seq[TitanNode] = {
@@ -55,8 +59,8 @@ case object titan {
       @annotation.tailrec
       def ancestors_rec(n: TitanNode, acc: Seq[TitanNode]): Seq[TitanNode] =
         n.parent match {
-          case None     => n +: acc
-          case Some(p)  => ancestors_rec(p, n +: acc)
+          case None    => n +: acc
+          case Some(p) => ancestors_rec(p, n +: acc)
         }
 
       ancestors_rec(node, Seq())

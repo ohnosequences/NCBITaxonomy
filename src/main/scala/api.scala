@@ -12,11 +12,11 @@ case object api {
 
     def v: V
 
-    def       id: String
-    def     name: String
+    def id: String
+    def name: String
     def rankName: String
     /* Note that this is an option because the root has no parent */
-    def   parent: Option[V]
+    def parent: Option[V]
     def rankNumber(implicit conv: V => Taxon[V]): Int =
       rankName.trim.toLowerCase match {
         case "superkingdom"     => 1
@@ -39,18 +39,19 @@ case object api {
         case "species"          => 18
         case "subspecies"       => 19
         // "no rank"
-        case _                  => parent.fold(0){ _.rankNumber } + 1
+        case _ => parent.fold(0) { _.rankNumber } + 1
       }
 
-    final def rank(implicit conv: V => Taxon[V]): String = s"${this.rankNumber}: ${this.rankName}"
+    final def rank(implicit conv: V => Taxon[V]): String =
+      s"${this.rankNumber}: ${this.rankName}"
 
     def ancestors(implicit conv: V => Taxon[V]): Seq[V] = {
 
       @annotation.tailrec
       def ancestors_rec(n: V, acc: Seq[V]): Seq[V] =
         n.parent match {
-          case None     => n +: acc
-          case Some(p)  => ancestors_rec(p, n +: acc)
+          case None    => n +: acc
+          case Some(p) => ancestors_rec(p, n +: acc)
         }
 
       ancestors_rec(v, Seq())
@@ -59,14 +60,16 @@ case object api {
 
   implicit final class Taxa[V](val nodes: Traversable[V]) extends AnyVal {
 
-    def lowestCommonAncestor(graph: TaxonomyGraph[V])(implicit conv: V => Taxon[V]): V = {
+    def lowestCommonAncestor(graph: TaxonomyGraph[V])(
+        implicit conv: V => Taxon[V]): V = {
 
-      def longestCommonPrefix(path1: Seq[V], path2: Seq[V]): Seq[V] = {
+      def longestCommonPrefix(path1: Seq[V], path2: Seq[V]): Seq[V] =
         (path1 zip path2)
-          .takeWhile { case (n1, n2) =>
-            n1.id == n2.id
-          }.map { _._1 }
-      }
+          .takeWhile {
+            case (n1, n2) =>
+              n1.id == n2.id
+          }
+          .map { _._1 }
 
       nodes
         .map(_.ancestors)

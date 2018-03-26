@@ -9,7 +9,8 @@ import com.bio4j.titan.model.ncbiTaxonomy.TitanNCBITaxonomyGraph
 
 case object ncbiTaxonomyBundle extends AnyBio4jDist {
 
-  lazy val s3folder: S3Folder = S3Folder("resources.ohnosequences.com", "16s/bio4j-taxonomy/")
+  lazy val s3folder: S3Folder =
+    S3Folder("resources.ohnosequences.com", "16s/bio4j-taxonomy/")
 
   lazy val configuration: Configuration = DefaultBio4jTitanConfig(dbLocation)
 

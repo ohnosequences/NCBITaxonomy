@@ -8,8 +8,10 @@ package object ncbitaxonomy {
   type TitanNode =
     com.bio4j.model.ncbiTaxonomy.vertices.NCBITaxon[
       DefaultTitanGraph,
-      TitanVertex, VertexLabelMaker,
-      TitanEdge, EdgeLabelMaker
+      TitanVertex,
+      VertexLabelMaker,
+      TitanEdge,
+      EdgeLabelMaker
     ]
 
   final def optional[T](jopt: java.util.Optional[T]): Option[T] =
