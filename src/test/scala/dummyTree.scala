@@ -1,6 +1,6 @@
-package ohnosequences.ncbitaxonomy.test
+package ohnosequences.db.taxonomy.test
 
-import ohnosequences.ncbitaxonomy._, api._
+import ohnosequences.db.taxonomy._, api._
 
 case object dummy {
 

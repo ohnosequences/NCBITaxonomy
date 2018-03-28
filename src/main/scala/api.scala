@@ -1,4 +1,4 @@
-package ohnosequences.ncbitaxonomy
+package ohnosequences.db.taxonomy
 
 case object api {
 

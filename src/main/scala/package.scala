@@ -2,7 +2,7 @@ package ohnosequences.db
 
 import ohnosequences.api.ncbitaxonomy.ScientificName
 
-package object ncbitaxonomy {
+package object taxonomy {
   sealed trait NameType
 
   case object NameType {
