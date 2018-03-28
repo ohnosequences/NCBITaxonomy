@@ -1,6 +1,28 @@
 package ohnosequences.db.taxonomy
 
+import ohnosequences.api.ncbitaxonomy.ScientificName
+
 case object api {
+
+  sealed trait NameType
+
+  case object NameType {
+    case object Normal              extends NameType
+    case object EnvironmentalSample extends NameType
+    case object Unclassified        extends NameType
+
+    def get: ScientificName => NameType =
+      scientificName => {
+        val name = scientificName.name.toLowerCase
+
+        if (name contains "unclassified")
+          NameType.Unclassified
+        else if (name startsWith "environmental samples")
+          NameType.EnvironmentalSample
+        else
+          NameType.Normal
+      }
+  }
 
   trait TaxonomyGraph[V] extends Any {
 
