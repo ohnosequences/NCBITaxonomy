@@ -1,3 +1,3 @@
-name := "ncbitaxonomy"
+name := "db.taxonomy"
 organization := "ohnosequences"
-description := "A Scala wrapper for Bio4j NCBI taxonomy data and API"
+description := "A Scala wrapper for NCBI taxonomy data and API"

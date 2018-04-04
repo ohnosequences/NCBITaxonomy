@@ -42,6 +42,8 @@ wartremoverWarnings in (Compile, compile) := Warts.allBut(
   Wart.ImplicitConversion,
   Wart.Nothing // needed because of the contexts compiler plugin
 )
+
+wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala" / "generateTrees.scala"
 ////////////////////////////////////////////////////////////////////////////////
 
 // Test configuration
