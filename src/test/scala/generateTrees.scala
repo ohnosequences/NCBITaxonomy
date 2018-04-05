@@ -21,6 +21,12 @@ case class TaxNode(
 
 class GenerateTrees extends org.scalatest.FunSuite {
 
+  type Tree =
+    Array[Array[TaxNode]]
+  // TreePosition = (Array, Position inside array)
+  type TreePosition =
+    (Int, Int)
+
   def getOrFail[E <: Error, X]: E + X => X =
     _ match {
       case Right(x) => x
@@ -143,12 +149,10 @@ class GenerateTrees extends org.scalatest.FunSuite {
       }
     }
 
-    val taxTree = foo(initialLevels)
+    foo(initialLevels)
+  }
 
-    // TreePosition = (Array, Position inside array)
-    type TreePosition =
-      (Int, Int)
-
+  def taxToTreeMap(taxTree: Tree): Map[Int, TreePosition] = {
     val taxtoTreePosition = MutableMap[Int, TreePosition]()
     var levelIndex        = 0
     while (levelIndex < taxTree.length) {
@@ -164,7 +168,27 @@ class GenerateTrees extends org.scalatest.FunSuite {
       levelIndex += 1
     }
 
-    taxTree
+    taxtoTreePosition.toMap
+  }
+
+  // An array from the node level (included) to the root level (included),
+  // showing the positions that conform the path from the specified node to the
+  // root.
+  def lineage(tree: Tree, nodePos: TreePosition): Array[Int] = {
+    val (levelIdx, nodeIdx) = nodePos
+
+    val lineage = new Array[Int](levelIdx + 1)
+    lineage(levelIdx) = nodeIdx
+
+    var currLevel = levelIdx - 1
+
+    while (currLevel >= 0) {
+      val prevLevel = currLevel + 1
+      lineage(currLevel) = tree(prevLevel)(lineage(prevLevel)).parentPosition
+      currLevel -= 1
+    }
+
+    lineage
   }
 
   test("Generate Tree") {
@@ -205,5 +229,9 @@ class GenerateTrees extends org.scalatest.FunSuite {
         }
       }
     }
+
+    val idsMap = taxToTreeMap(taxTree)
+    println(s"Root lineage   : ${lineage(taxTree, idsMap(1)).mkString(", ")}")
+    println(s"Random lineage : ${lineage(taxTree, idsMap(505)).mkString(", ")}")
   }
 }
