@@ -143,7 +143,28 @@ class GenerateTrees extends org.scalatest.FunSuite {
       }
     }
 
-    foo(initialLevels)
+    val taxTree = foo(initialLevels)
+
+    // TreePosition = (Array, Position inside array)
+    type TreePosition =
+      (Int, Int)
+
+    val taxtoTreePosition = MutableMap[Int, TreePosition]()
+    var levelIndex        = 0
+    while (levelIndex < taxTree.length) {
+      val level = taxTree(levelIndex)
+
+      var arrayIndex = 0
+      while (arrayIndex < level.length) {
+        val node = level(arrayIndex)
+        taxtoTreePosition += node.taxID -> ((levelIndex, arrayIndex))
+        arrayIndex += 1
+      }
+
+      levelIndex += 1
+    }
+
+    taxTree
   }
 
   test("Generate Tree") {
