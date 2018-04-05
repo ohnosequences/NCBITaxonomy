@@ -112,6 +112,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
         var childrenOffset      = 0
         var grandChildrenOffset = 0
         var parentPos           = 0
+
         // Iterate nodes in current level and add their children to nextLevel
         while (parentPos < lastLevel.length) {
           val parent           = lastLevel(parentPos)
@@ -147,11 +148,41 @@ class GenerateTrees extends org.scalatest.FunSuite {
 
   test("Generate Tree") {
     // Resource preparation
-    // createDirectoryOrFail(baseDir)
-    // downloadOrFail(ohnosequences.db.ncbitaxonomy.names, namesFile)
-    // downloadOrFail(ohnosequences.db.ncbitaxonomy.nodes, nodesFile)
+    createDirectoryOrFail(baseDir)
+
+    if (!namesFile.exists)
+      downloadOrFail(ohnosequences.db.ncbitaxonomy.names, namesFile)
+
+    if (!nodesFile.exists)
+      downloadOrFail(ohnosequences.db.ncbitaxonomy.nodes, nodesFile)
 
     // Tree generation
-    generateTrees(namesFile, nodesFile)
+    val taxTree = generateTaxTreeFromStrings(
+      retrieveLinesFrom(nodesFile).right.getOrElse(fail("Failure"))
+    )
+
+    // The number of nodes in ohnosequences.db.ncbitaxonomy.nodes, v0.0.1
+    val nodesNumber = 1703606
+
+    // Check the number of nodes in the tree equals the number of nodes in the
+    // file
+    assert((taxTree map { _.length }).sum == nodesNumber)
+
+    // Check the children positions of each node are legal; i.e., are in the
+    // range of the next level array
+    for (levelIndex <- 0 until taxTree.length) {
+      val level = taxTree(levelIndex)
+      level foreach { node =>
+        val nextLevelLength =
+          if (node.childrenPositions.isEmpty)
+            0
+          else
+            taxTree(levelIndex + 1).length
+
+        node.childrenPositions map { pos =>
+          assert(pos < nextLevelLength)
+        }
+      }
+    }
   }
 }
