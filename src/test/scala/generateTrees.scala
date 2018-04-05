@@ -42,17 +42,19 @@ class GenerateTrees extends org.scalatest.FunSuite {
     try { op(p) } finally { p.close() }
   }
 
-  def generateTrees(names: File, nodes: File) = {
+  // Create a map TaxID -> (ParentID, List[ChildID])
+  def generateNodesMap(lines: Iterator[String]) = {
     // Create a map TaxID -> ParentID
     val parentsMap: Map[Int, Int] =
-      retrieveLinesFrom(nodes).right map { iterator =>
-        dmp.nodes
-          .fromLines(iterator)
-          .map({ node =>
+      dmp.nodes
+        .fromLines(lines)
+        .map({ node =>
+          if (node.ID == node.parentID)
+            node.ID.toInt -> -1
+          else
             node.ID.toInt -> node.parentID.toInt
-          })
-          .toMap
-      } getOrElse (fail("Failure"))
+        })
+        .toMap
 
     // Create a map TaxID -> List[ChildID]
     val childrenMap: MutableMap[Int, MutableArrayBuffer[Int]] =
@@ -71,10 +73,23 @@ class GenerateTrees extends org.scalatest.FunSuite {
       .foldLeft(Map[Int, (Int, Array[Int])]()) {
         case (currentMap, (nodeID, parentID)) =>
           val children =
-            childrenMap.get(nodeID).fold(Array[Int]()) { _.toArray }
+            childrenMap.get(nodeID).map({ _.toArray }).getOrElse(Array[Int]())
           val value = (parentID, children)
           currentMap + (nodeID -> value)
       }
+
+    // Return whole map
+    wholeMap
+  }
+
+  def generateTrees(names: File, nodes: File) = {
+
+    val lines = retrieveLinesFrom(nodes).right.getOrElse(fail("Failure"))
+
+    val wholeMap = generateNodesMap(lines)
+
+    println(s"Whole map size = ${wholeMap.size}")
+    println(s"Root children: ${wholeMap(1)._2.mkString(", ")}")
 
     val root: TaxNode                        = TaxNode(1, 1)
     val rootLevel: Array[TaxNode]            = Array(root)
@@ -87,15 +102,20 @@ class GenerateTrees extends org.scalatest.FunSuite {
       println(s"Level $levelCount.")
       levelCount += 1
 
-      if (levels.last.isEmpty)
+      val lastLevel = levels.last
+
+      if (lastLevel.isEmpty)
         levels
       else {
+        println(s"Current level length = ${lastLevel.length}")
+
         // Compute next level length
         var length = 0
-        levels.last foreach { parent =>
-          length += wholeMap(parent.taxID)._2.length
+        lastLevel foreach { parent =>
+          val (_, childrenIDs) = wholeMap(parent.taxID)
+          length += childrenIDs.length
         }
-        println(s"Next level length = $length")
+        println(s"Next level length    = $length")
 
         // Create empty array for next level
         val nextLevel = new Array[TaxNode](length)
@@ -104,13 +124,13 @@ class GenerateTrees extends org.scalatest.FunSuite {
         var offset    = 0
         var parentPos = 0
         // Iterate nodes in current level and add their children to nextLevel
-        while (parentPos < levels.last.length) {
-          val parent      = levels.last(parentPos)
-          val childrenIDs = wholeMap(parent.taxID)._2
+        while (parentPos < lastLevel.length) {
+          val parent           = lastLevel(parentPos)
+          val (_, childrenIDs) = wholeMap(parent.taxID)
 
           var i = 0
           while (i < childrenIDs.length) {
-            nextLevel(offset + i) = TaxNode(childrenIDs(i), parent.taxID)
+            nextLevel(offset + i) = TaxNode(childrenIDs(i), parentPos)
             i += 1
           }
 
