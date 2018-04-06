@@ -11,6 +11,7 @@ import ohnosequences.test.ReleaseOnlyTest
 import ohnosequences.awstools.s3.S3Object
 import scala.collection.mutable.{Map => MutableMap}
 import scala.collection.mutable.{ArrayBuffer => MutableArrayBuffer}
+import scala.collection.mutable.{Set => MutableSet}
 import java.io.File
 
 case class TaxNode(
@@ -189,6 +190,43 @@ class GenerateTrees extends org.scalatest.FunSuite {
     }
 
     lineage
+  }
+
+  def branch(tree: Tree, nodePos: TreePosition): Array[Array[Int]] =
+    ???
+
+  def extractSubTree(tree: Tree,
+                     predicate: TaxNode => Boolean): Array[Set[Int]] = {
+    val selectedNodesByLevel = new Array[MutableSet[Int]](tree.length)
+
+    var levelIdx = 0
+    while (levelIdx < tree.length) {
+      val level = tree(levelIdx)
+
+      var nodeIdx = 0
+      while (nodeIdx < level.length) {
+        val node = level(nodeIdx)
+
+        if (predicate(node)) {
+          val ancestry = lineage(tree, (levelIdx, nodeIdx))
+          val progeny  = branch(tree, (levelIdx, nodeIdx))
+
+          for ((ancestorIdx, ancestryLevelIdx) <- ancestry.view.zipWithIndex) {
+            selectedNodesByLevel(ancestryLevelIdx) += ancestorIdx
+          }
+
+          for ((progenyLevel, progenyLevelIdx) <- progeny.view.zipWithIndex) {
+            selectedNodesByLevel(levelIdx + progenyLevelIdx) ++= progenyLevel.toSet
+          }
+        }
+
+        nodeIdx += 1
+      }
+
+      levelIdx += 1
+    }
+
+    selectedNodesByLevel map { _.toSet }
   }
 
   test("Generate Tree") {
