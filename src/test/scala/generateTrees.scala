@@ -194,12 +194,59 @@ class GenerateTrees extends org.scalatest.FunSuite {
     lineage
   }
 
-  def branch(tree: Tree, nodePos: TreePosition): Array[Array[Int]] =
-    ???
+  def branch(tree: Tree, nodePos: TreePosition): Array[Array[Int]] = {
+    @annotation.tailrec
+    def branch_rec(nodesPositions: Array[Array[Int]],
+                   lastDepth: Int): Array[Array[Int]] = {
+      val currentNodesPositions = nodesPositions.last
+      val currentNodesLevel     = tree(lastDepth)
+
+      // Compute next level length
+      var length = 0
+      currentNodesPositions foreach { parentIdx =>
+        length += currentNodesLevel(parentIdx).childrenPositions.length
+      }
+
+      if (length == 0) {
+        nodesPositions
+      } else {
+        // Create empty array for next level
+        val nextLevel = new Array[Int](length)
+
+        // Populate nextLevel
+        var childrenOffset = 0
+        var i              = 0
+
+        // Iterate nodes in current level and add their children to nextLevel
+        while (i < currentNodesPositions.length) {
+          val childrenPositions =
+            currentNodesLevel(currentNodesPositions(i)).childrenPositions
+
+          System.arraycopy(
+            childrenPositions,
+            0,
+            nextLevel,
+            childrenOffset,
+            childrenPositions.length
+          )
+
+          childrenOffset += childrenPositions.length
+          i += 1
+        }
+
+        branch_rec(nodesPositions :+ nextLevel, lastDepth + 1)
+      }
+    }
+
+    val (levelIdx, nodeIdx) = nodePos
+    branch_rec(Array(Array(nodeIdx)), levelIdx)
+  }
 
   def extractSubTree(tree: Tree,
                      predicate: TaxNode => Boolean): Array[Set[Int]] = {
-    val selectedNodesByLevel = new Array[MutableSet[Int]](tree.length)
+    val selectedNodesByLevel = Array.tabulate(tree.length) { i =>
+      MutableSet[Int]()
+    }
 
     var levelIdx = 0
     while (levelIdx < tree.length) {
@@ -231,7 +278,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
     selectedNodesByLevel map { _.toSet }
   }
 
-  test("Generate Tree") {
+  val taxTree = {
     // Resource preparation
     createDirectoryOrFail(baseDir)
 
@@ -242,9 +289,14 @@ class GenerateTrees extends org.scalatest.FunSuite {
       downloadOrFail(ohnosequences.db.ncbitaxonomy.nodes, nodesFile)
 
     // Tree generation
-    val taxTree = generateTaxTreeFromStrings(
+    generateTaxTreeFromStrings(
       retrieveLinesFrom(nodesFile).right.getOrElse(fail("Failure"))
     )
+  }
+
+  val idsMap = taxToTreeMap(taxTree)
+
+  test("Tree length") {
 
     // The number of nodes in ohnosequences.db.ncbitaxonomy.nodes, v0.0.1
     val nodesNumber = 1703606
@@ -252,6 +304,9 @@ class GenerateTrees extends org.scalatest.FunSuite {
     // Check the number of nodes in the tree equals the number of nodes in the
     // file
     assert((taxTree map { _.length }).sum == nodesNumber)
+  }
+
+  test("Node positions") {
 
     // Check the children positions of each node are legal; i.e., are in the
     // range of the next level array
@@ -269,9 +324,41 @@ class GenerateTrees extends org.scalatest.FunSuite {
         }
       }
     }
+  }
 
-    val idsMap = taxToTreeMap(taxTree)
-    println(s"Root lineage   : ${lineage(taxTree, idsMap(1)).mkString(", ")}")
+  test("Lineages") {
+    println(s"Root lineage : ${lineage(taxTree, idsMap(1)).mkString(", ")}")
     println(s"Random lineage : ${lineage(taxTree, idsMap(505)).mkString(", ")}")
+
+  }
+
+  test("Branches") {
+    println(
+      s"Random branch with ${branch(taxTree, idsMap(505)).length} levels : " +
+        branch(taxTree, idsMap(505))
+          .map({ l =>
+            l.mkString(", ")
+          })
+          .mkString("; ")
+    )
+  }
+
+  test("Extract subtree") {
+    val (levelIdx, nodeIdx) = idsMap(505)
+
+    val subTree505 = extractSubTree(taxTree, { node =>
+      node.payload == 505
+    })
+
+    val lineage505 = lineage(taxTree, idsMap(505))
+    val branch505  = branch(taxTree, idsMap(505))
+
+    for (i <- 0 until branch505.length) {
+      branch505(i).toSet == subTree505(levelIdx + i)
+    }
+
+    for (i <- 0 until lineage505.length) {
+      Set(lineage505(i)) == subTree505(i)
+    }
   }
 }
