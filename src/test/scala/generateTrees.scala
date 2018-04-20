@@ -6,7 +6,7 @@ import ohnosequences.db.taxonomy.test.utils.{
   retrieveLinesFrom
 }
 import ohnosequences.db.taxonomy._
-import ohnosequences.api.ncbitaxonomy.dmp
+import ohnosequences.api.ncbitaxonomy.{TaxID, dmp}
 import ohnosequences.test.ReleaseOnlyTest
 import ohnosequences.awstools.s3.S3Object
 import ohnosequences.trees.{Depth, Index, Node, NodePosition, Tree}
@@ -16,8 +16,8 @@ import scala.collection.mutable.{Set => MutableSet}
 import java.io.File
 
 class GenerateTrees extends org.scalatest.FunSuite {
-  type TaxNode = Node[Int]
-  type TaxTree = Tree[Int]
+  type TaxNode = Node[TaxID]
+  type TaxTree = Tree[TaxID]
 
   def getOrFail[E <: Error, X]: E + X => X =
     _ match {
@@ -40,52 +40,13 @@ class GenerateTrees extends org.scalatest.FunSuite {
     try { op(p) } finally { p.close() }
   }
 
-  // Return a map TaxID -> (ParentID, List[ChildID])
-  def generateNodesMap(lines: Iterator[String]) = {
-    // Create a map TaxID -> ParentID
-    val parentsMap: Map[Int, Int] =
-      dmp.nodes
-        .fromLines(lines)
-        .map({ node =>
-          if (node.ID == node.parentID)
-            node.ID.toInt -> -1
-          else
-            node.ID.toInt -> node.parentID.toInt
-        })
-        .toMap
-
-    // Create a map TaxID -> List[ChildID]
-    val childrenMap: MutableMap[Int, MutableArrayBuffer[Int]] =
-      parentsMap.foldLeft(MutableMap[Int, MutableArrayBuffer[Int]]()) {
-        case (currentMap, (nodeID, parentID)) =>
-          if (currentMap.isDefinedAt(parentID)) {
-            currentMap(parentID) += nodeID
-          } else {
-            currentMap += (parentID -> MutableArrayBuffer(nodeID))
-          }
-          currentMap
-      }
-
-    // Create a map TaxID -> (ParentID, List[ChildID])
-    val wholeMap: Map[Int, (Int, Array[Int])] = parentsMap
-      .foldLeft(Map[Int, (Int, Array[Int])]()) {
-        case (currentMap, (nodeID, parentID)) =>
-          val children =
-            childrenMap.get(nodeID).map({ _.toArray }).getOrElse(Array[Int]())
-          val value = (parentID, children)
-          currentMap + (nodeID -> value)
-      }
-
-    // Return whole map
-    wholeMap
-  }
-
   def generateTaxTreeFromStrings(nodesLines: Iterator[String]) = {
-    val wholeMap = generateNodesMap(nodesLines)
+    val wholeMap = dmp.parse.generateNodesMap(nodesLines)
 
-    val rootChildren = wholeMap(1)._2
+    val rootID: TaxID = 1
+    val rootChildren  = wholeMap(rootID)._2
     val root: TaxNode =
-      new TaxNode(1, None, (0 until rootChildren.length).toArray)
+      new TaxNode(rootID, None, (0 until rootChildren.length).toArray)
 
     val rootLevel: Array[TaxNode]            = Array(root)
     val initialLevels: Array[Array[TaxNode]] = Array(rootLevel)
@@ -146,8 +107,8 @@ class GenerateTrees extends org.scalatest.FunSuite {
     new TaxTree(generateTaxTree_rec(initialLevels))
   }
 
-  def taxTreeToMap(taxTree: TaxTree): Map[Int, NodePosition] = {
-    val taxtoNodePosition = MutableMap[Int, NodePosition]()
+  def taxTreeToMap(taxTree: TaxTree): Map[TaxID, NodePosition] = {
+    val taxtoNodePosition = MutableMap[TaxID, NodePosition]()
     var levelIndex        = 0
     while (levelIndex < taxTree.depth) {
       val level = taxTree(levelIndex)
@@ -181,7 +142,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
     )
   }
 
-  val idsMap = taxToTreeMap(taxTree)
+  val idsMap = taxTreeToMap(taxTree)
 
   test("Tree length") {
 
@@ -213,17 +174,21 @@ class GenerateTrees extends org.scalatest.FunSuite {
     }
   }
 
+  val rootID: TaxID = 1
+  val aTaxID: TaxID = 505
+
   test("Lineages") {
-    println(s"Root lineage : ${taxTree.lineage(idsMap(1)).mkString(", ")}")
-    println(s"Random lineage : ${taxTree.lineage(idsMap(505)).mkString(", ")}")
+    println(s"Root lineage : ${taxTree.lineage(idsMap(rootID)).mkString(", ")}")
+    println(
+      s"Random lineage : ${taxTree.lineage(idsMap(aTaxID)).mkString(", ")}")
 
   }
 
   test("Branches") {
     println(
-      s"Random branch with ${taxTree.branch(idsMap(505)).length} levels : " +
+      s"Random branch with ${taxTree.branch(idsMap(aTaxID)).length} levels : " +
         taxTree
-          .branch(idsMap(505))
+          .branch(idsMap(aTaxID))
           .map({ l =>
             l.mkString(", ")
           })
@@ -232,14 +197,14 @@ class GenerateTrees extends org.scalatest.FunSuite {
   }
 
   test("Extract subtree") {
-    val (levelIdx, nodeIdx) = idsMap(505)
+    val (levelIdx, nodeIdx) = idsMap(aTaxID)
 
     val subTree505 = taxTree.extractSubTree({ node =>
-      node.payload == 505
+      node.payload == aTaxID
     })
 
-    val lineage505 = taxTree.lineage(idsMap(505))
-    val branch505  = taxTree.branch(idsMap(505))
+    val lineage505 = taxTree.lineage(idsMap(aTaxID))
+    val branch505  = taxTree.branch(idsMap(aTaxID))
 
     for (i <- 0 until branch505.length) {
       branch505(i).toSet == subTree505(levelIdx + i)

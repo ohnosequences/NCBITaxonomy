@@ -1,5 +1,5 @@
 libraryDependencies ++= Seq(
-  "ohnosequences" %% "api-ncbitaxonomy" % "0.1.0-22-g162e052",
+  "ohnosequences" %% "api-ncbitaxonomy" % "0.1.0-22-g162e052-SNAPSHOT",
   "ohnosequences" %% "trees"            % "0.0.0-12-g083a074-SNAPSHOT"
 ) ++ testDependencies
 
