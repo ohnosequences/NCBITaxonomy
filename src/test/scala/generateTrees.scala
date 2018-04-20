@@ -107,6 +107,16 @@ class GenerateTrees extends org.scalatest.FunSuite {
     new TaxTree(generateTaxTree_rec(initialLevels))
   }
 
+  def generateNamesMapFromStrings(
+      namesLines: Iterator[String]
+  ): Map[TaxID, String] =
+    dmp.names
+      .fromLines(namesLines)
+      .map { sciName =>
+        sciName.nodeID -> sciName.name
+      }
+      .toMap
+
   def taxTreeToMap(taxTree: TaxTree): Map[TaxID, NodePosition] = {
     val taxtoNodePosition = MutableMap[TaxID, NodePosition]()
     var levelIndex        = 0
@@ -126,7 +136,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
     taxtoNodePosition.toMap
   }
 
-  val taxTree = {
+  val (taxTree, nodesNames) = {
     // Resource preparation
     createDirectoryOrFail(baseDir)
 
@@ -136,9 +146,13 @@ class GenerateTrees extends org.scalatest.FunSuite {
     if (!nodesFile.exists)
       downloadOrFail(ohnosequences.db.ncbitaxonomy.nodes, nodesFile)
 
-    // Tree generation
-    generateTaxTreeFromStrings(
-      retrieveLinesFrom(nodesFile).right.getOrElse(fail("Failure"))
+    (
+      generateTaxTreeFromStrings(
+        retrieveLinesFrom(nodesFile).right.getOrElse(fail("Failure"))
+      ),
+      generateNamesMapFromStrings(
+        retrieveLinesFrom(namesFile).right.getOrElse(fail("Failure"))
+      )
     )
   }
 
@@ -197,8 +211,6 @@ class GenerateTrees extends org.scalatest.FunSuite {
   }
 
   test("Extract subtree") {
-    val (levelIdx, nodeIdx) = idsMap(aTaxID)
-
     val subTree505 = taxTree.extractSubTree({ node =>
       node.payload == aTaxID
     })
@@ -206,12 +218,56 @@ class GenerateTrees extends org.scalatest.FunSuite {
     val lineage505 = taxTree.lineage(idsMap(aTaxID))
     val branch505  = taxTree.branch(idsMap(aTaxID))
 
+    val (levelIdx, _) = idsMap(aTaxID)
+
     for (i <- 0 until branch505.length) {
       branch505(i).toSet == subTree505(levelIdx + i)
     }
 
     for (i <- 0 until lineage505.length) {
       Set(lineage505(i)) == subTree505(i)
+    }
+  }
+
+  test("Unclassified tree") {
+    import ohnosequences.db.taxonomy.api.NameType
+
+    val unclassifiedTree = taxTree.extractSubTree({ node =>
+      api.NameType.get(nodesNames(node.payload)) == api.NameType.Unclassified
+    })
+
+    // Check that every node in the subtree has either an ancestor or a
+    // descendant that is unclassified
+    for ((level, depth) <- unclassifiedTree.view.zipWithIndex) {
+      level map { nodeIdx =>
+        val nodePos: NodePosition = (depth, nodeIdx)
+        val ancestorsIndices      = taxTree.lineage(nodePos)
+        val descendantsIndices    = taxTree.branch(nodePos)
+
+        // Check if any node in lineage is unclassified
+        val anc: Seq[Boolean] =
+          ancestorsIndices.view.zipWithIndex.map {
+            case (nodeIdx, ancDepth) =>
+              val sciName = NameType.get(
+                nodesNames(taxTree(ancDepth)(nodeIdx).payload)
+              )
+              sciName == NameType.Unclassified
+          }
+
+        // TODO Check if any node in subtree is unclassified
+        val des: Seq[Boolean] =
+          descendantsIndices.view.zipWithIndex.flatMap {
+            case (descLevel, descDepth) =>
+              descLevel map { nodeIdx =>
+                val sciName = NameType.get(
+                  nodesNames(taxTree(descDepth + depth)(nodeIdx).payload)
+                )
+                sciName == NameType.Unclassified
+              }
+          }
+
+        assert { anc.contains(true) || des.contains(true) }
+      }
     }
   }
 }

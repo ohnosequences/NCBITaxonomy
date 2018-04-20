@@ -1,7 +1,5 @@
 package ohnosequences.db.taxonomy
 
-import ohnosequences.api.ncbitaxonomy.ScientificName
-
 case object api {
 
   sealed trait NameType
@@ -13,7 +11,7 @@ case object api {
 
     def get: ScientificName => NameType =
       scientificName => {
-        val name = scientificName.name.toLowerCase
+        val name = scientificName.toLowerCase
 
         if (name contains "unclassified")
           NameType.Unclassified
