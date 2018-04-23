@@ -121,7 +121,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
     val taxtoNodePosition = MutableMap[TaxID, NodePosition]()
     var levelIndex        = 0
     while (levelIndex < taxTree.depth) {
-      val level = taxTree(levelIndex)
+      val level = taxTree.level(levelIndex)
 
       var arrayIndex = 0
       while (arrayIndex < level.length) {
@@ -156,7 +156,8 @@ class GenerateTrees extends org.scalatest.FunSuite {
     )
   }
 
-  val idsMap = taxTreeToMap(taxTree)
+  val lastIndex = taxTree.depth - 1
+  val lastLevel = taxTree.level(lastIndex)
 
   test("Tree length") {
 
@@ -173,13 +174,13 @@ class GenerateTrees extends org.scalatest.FunSuite {
     // Check the children positions of each node are legal; i.e., are in the
     // range of the next level array
     for (levelIndex <- 0 until taxTree.depth) {
-      val level = taxTree(levelIndex)
+      val level = taxTree.level(levelIndex)
       level foreach { node =>
         val nextLevelLength =
           if (node.childrenIndices.isEmpty)
             0
           else
-            taxTree(levelIndex + 1).length
+            taxTree.level(levelIndex + 1).length
 
         node.childrenIndices map { pos =>
           assert(pos < nextLevelLength)
@@ -191,18 +192,19 @@ class GenerateTrees extends org.scalatest.FunSuite {
   val rootID: TaxID = 1
   val aTaxID: TaxID = 505
 
-  test("Lineages") {
-    println(s"Root lineage : ${taxTree.lineage(idsMap(rootID)).mkString(", ")}")
-    println(
-      s"Random lineage : ${taxTree.lineage(idsMap(aTaxID)).mkString(", ")}")
+  val rootIDPos: NodePosition = taxTree.pos(rootID)
+  val aTaxIDPos: NodePosition = taxTree.pos(aTaxID)
 
+  test("Lineages") {
+    println(s"Root lineage : ${taxTree.lineage(rootIDPos).mkString(", ")}")
+    println(s"Random lineage : ${taxTree.lineage(aTaxIDPos).mkString(", ")}")
   }
 
   test("Branches") {
     println(
-      s"Random branch with ${taxTree.branch(idsMap(aTaxID)).length} levels : " +
+      s"Random branch with ${taxTree.branch(aTaxIDPos).length} levels : " +
         taxTree
-          .branch(idsMap(aTaxID))
+          .branch(aTaxIDPos)
           .map({ l =>
             l.mkString(", ")
           })
@@ -215,10 +217,10 @@ class GenerateTrees extends org.scalatest.FunSuite {
       node.payload == aTaxID
     })
 
-    val lineage505 = taxTree.lineage(idsMap(aTaxID))
-    val branch505  = taxTree.branch(idsMap(aTaxID))
+    val lineage505 = taxTree.lineage(aTaxIDPos)
+    val branch505  = taxTree.branch(aTaxIDPos)
 
-    val (levelIdx, _) = idsMap(aTaxID)
+    val (levelIdx, _) = aTaxIDPos
 
     for (i <- 0 until branch505.length) {
       branch505(i).toSet == subTree505(levelIdx + i)
@@ -249,7 +251,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
           ancestorsIndices.view.zipWithIndex.map {
             case (nodeIdx, ancDepth) =>
               val sciName = NameType.get(
-                nodesNames(taxTree(ancDepth)(nodeIdx).payload)
+                nodesNames(taxTree((ancDepth, nodeIdx)).payload)
               )
               sciName == NameType.Unclassified
           }
@@ -260,7 +262,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
             case (descLevel, descDepth) =>
               descLevel map { nodeIdx =>
                 val sciName = NameType.get(
-                  nodesNames(taxTree(descDepth + depth)(nodeIdx).payload)
+                  nodesNames(taxTree((descDepth + depth, nodeIdx)).payload)
                 )
                 sciName == NameType.Unclassified
               }
@@ -269,5 +271,24 @@ class GenerateTrees extends org.scalatest.FunSuite {
         assert { anc.contains(true) || des.contains(true) }
       }
     }
+  }
+
+  test("LCA of all nodes in the most populated (8th at the moment) level") {
+    taxTree.lca(
+      Array.tabulate(taxTree.level(8).length) { i =>
+        (8, i)
+      }
+    )
+  }
+
+  test("LCA of a deep node repeated many times") {
+    val firstDeepestNode = (lastIndex, 0)
+    taxTree.lca(Array.tabulate(100000) { i =>
+      firstDeepestNode
+    })
+  }
+
+  test("LCA of all nodes in the tree") {
+    taxTree.lca(taxTree.indices.toArray)
   }
 }
