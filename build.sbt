@@ -3,7 +3,7 @@ organization  := "ohnosequences"
 description   := "A Scala wrapper for Bio4j NCBI taxonomy data and API"
 bucketSuffix  := "era7.com"
 
-crossScalaVersions := Seq("2.11.11", "2.12.3")
+crossScalaVersions := Seq("2.11.12", "2.12.6")
 scalaVersion := crossScalaVersions.value.max
 
 scalacOptions ++= Seq(
@@ -11,8 +11,8 @@ scalacOptions ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "ohnosequences-bundles" %% "bio4j-dist" % "0.4.0",
-  "org.scalatest" %% "scalatest" % "3.0.4" % Test
+  "ohnosequences-bundles" %% "bio4j-dist" % "0.5.0",
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
 
 dependencyOverrides ++= Seq(
