@@ -9,13 +9,20 @@ case object api {
     case object EnvironmentalSample extends NameType
     case object Unclassified        extends NameType
 
+    def isUnclassified: ScientificName => Boolean =
+      _.toLowerCase contains "unclassified"
+
+    def isEnvironmental: ScientificName => Boolean =
+      _.toLowerCase startsWith "environmental sample"
+
+    def isClassified: ScientificName => Boolean =
+      name => !isEnvironmental(name) && !isUnclassified(name)
+
     def get: ScientificName => NameType =
       scientificName => {
-        val name = scientificName.toLowerCase
-
-        if (name contains "unclassified")
+        if (isEnvironmental(scientificName))
           NameType.Unclassified
-        else if (name startsWith "environmental samples")
+        else if (isUnclassified(scientificName))
           NameType.EnvironmentalSample
         else
           NameType.Normal
