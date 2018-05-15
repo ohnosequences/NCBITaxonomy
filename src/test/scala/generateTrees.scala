@@ -99,6 +99,20 @@ class GenerateTrees extends org.scalatest.FunSuite {
     new TaxTree(generateTaxTree_rec(initialLevels))
   }
 
+  def taxTreeToTreeMap(taxTree: TaxTree): TreeMap =
+    taxTree.indices.foldLeft(TreeMap()) {
+      case (map, nodePos) =>
+        val node = taxTree(nodePos).payload
+        val parent = taxTree.parent(nodePos) map { parentPos =>
+          taxTree(parentPos).payload
+        }
+        val children = taxTree.children(nodePos) map { childPos =>
+          taxTree(childPos).payload
+        }
+
+        map + (node -> ((parent, children)))
+    }
+
   def taxSubTreeIndicesToTreeMap(taxTree: TaxTree,
                                  positions: Array[NodePosition]): TreeMap =
     positions.foldLeft(TreeMap()) {
@@ -128,7 +142,7 @@ class GenerateTrees extends org.scalatest.FunSuite {
 
     // Generate tree map with the taxonomic root we need, to force that the only
     // considered nodes ara Archaea and Bacteria
-    val treeMap: TreeMap = io.generateNodesMap(nodesIt) + data.root
+    val treeMap: TreeMap = io.generateNodesMap(nodesIt)
 
     // Auxiliary information: names and ranks
     val namesMap: Map[TaxID, String] = io.generateNamesMap(namesIt)
@@ -144,13 +158,17 @@ class GenerateTrees extends org.scalatest.FunSuite {
       api.NameType.isUnclassified(namesMap(node.payload))
     })
 
-    val claTree: TaxTree = fullTree.subTreePruningAll({ node =>
+    val claTree: TaxTree = fullTree.pruneAll({ node =>
       !api.NameType.isClassified(namesMap(node.payload))
     })
 
     val envMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, envTree)
     val uncMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, uncTree)
-    // val claMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, claTree)
+    val claMap: TreeMap = taxTreeToTreeMap(claTree)
+
+    claMap foreach {
+      case (k, v) => assert { api.NameType.isClassified(namesMap(k)) }
+    }
   }
 
   // test("Tree length") {
