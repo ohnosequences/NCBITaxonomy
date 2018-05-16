@@ -1,5 +1,6 @@
 package ohnosequences.db.taxonomy.test
 
+import ohnosequences.db.taxonomy.test.IOSuite
 import ohnosequences.db.taxonomy.test.utils.{
   createDirectory,
   downloadFrom,
@@ -12,122 +13,7 @@ import ohnosequences.awstools.s3.S3Object
 import ohnosequences.trees.{Index, Node, NodePosition, Tree, TreeIndices}
 import java.io.File
 
-class GenerateTrees extends org.scalatest.FunSuite {
-  type TaxNode = Node[TaxID]
-  type TaxTree = Tree[TaxID]
-
-  def getOrFail[E <: Error, X]: E + X => X =
-    _ match {
-      case Right(x) => x
-      case Left(e)  => fail(e.msg)
-    }
-
-  def downloadOrFail(s3Object: S3Object, file: File) =
-    getOrFail {
-      downloadFrom(s3Object, file)
-    }
-
-  def createDirectoryOrFail(dir: File) =
-    getOrFail {
-      createDirectory(dir)
-    }
-
-  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
-    val p = new java.io.PrintWriter(f)
-    try { op(p) } finally { p.close() }
-  }
-
-  def treeMapToTaxTree(wholeMap: TreeMap, rootID: TaxID): TaxTree = {
-    val rootChildren = wholeMap(rootID)._2
-    val root: TaxNode =
-      new TaxNode(rootID, None, 0, rootChildren.length)
-
-    val rootLevel: Array[TaxNode]            = Array(root)
-    val initialLevels: Array[Array[TaxNode]] = Array(rootLevel)
-
-    @annotation.tailrec
-    def generateTaxTree_rec(
-        levels: Array[Array[TaxNode]]): Array[Array[TaxNode]] = {
-      val lastLevel = levels.last
-
-      // Compute next level length
-      var length = 0
-      lastLevel foreach { parent =>
-        val (_, childrenIDs) = wholeMap(parent.payload)
-        length += childrenIDs.length
-      }
-
-      if (length == 0) {
-        levels
-      } else {
-        // Create empty array for next level
-        val nextLevel = new Array[TaxNode](length)
-
-        // Populate nextLevel
-        var childrenOffset      = 0
-        var grandChildrenOffset = 0
-        var parentPos           = 0
-
-        // Iterate nodes in current level and add their children to nextLevel
-        while (parentPos < lastLevel.length) {
-          val parent           = lastLevel(parentPos)
-          val (_, childrenIDs) = wholeMap(parent.payload)
-
-          var i = 0
-          while (i < childrenIDs.length) {
-            val childID               = childrenIDs(i)
-            val (_, grandChildrenIDs) = wholeMap(childID)
-            val grandChildrenNum      = grandChildrenIDs.length
-
-            nextLevel(childrenOffset + i) = new Node(childID,
-                                                     Some(parentPos),
-                                                     grandChildrenOffset,
-                                                     grandChildrenNum)
-
-            i += 1
-            grandChildrenOffset += grandChildrenNum
-          }
-
-          childrenOffset += childrenIDs.length
-          parentPos += 1
-        }
-
-        generateTaxTree_rec(levels :+ nextLevel)
-      }
-    }
-
-    new TaxTree(generateTaxTree_rec(initialLevels))
-  }
-
-  def taxTreeToTreeMap(taxTree: TaxTree): TreeMap =
-    taxTree.indices.foldLeft(TreeMap()) {
-      case (map, nodePos) =>
-        val node = taxTree(nodePos).payload
-        val parent = taxTree.parent(nodePos) map { parentPos =>
-          taxTree(parentPos).payload
-        }
-        val children = taxTree.children(nodePos) map { childPos =>
-          taxTree(childPos).payload
-        }
-
-        map + (node -> ((parent, children)))
-    }
-
-  def taxSubTreeIndicesToTreeMap(taxTree: TaxTree,
-                                 positions: Array[NodePosition]): TreeMap =
-    positions.foldLeft(TreeMap()) {
-      case (map, nodePos) =>
-        val node = taxTree(nodePos).payload
-        val parent = taxTree.parent(nodePos) map { parentPos =>
-          taxTree(parentPos).payload
-        }
-        val children = taxTree.children(nodePos) map { childPos =>
-          taxTree(childPos).payload
-        }
-
-        map + (node -> ((parent, children)))
-    }
-
+class GenerateTrees extends IOSuite {
   test("Generate trees", ReleaseOnlyTest) {
     createDirectoryOrFail(baseDir)
 
@@ -137,31 +23,33 @@ class GenerateTrees extends org.scalatest.FunSuite {
     if (!nodesFile.exists)
       downloadOrFail(ohnosequences.db.ncbitaxonomy.nodes, nodesFile)
 
-    val nodesIt = retrieveLinesFrom(nodesFile).right.getOrElse(fail("Failure"))
-    val namesIt = retrieveLinesFrom(namesFile).right.getOrElse(fail("Failure"))
+    val nodesIt = retrieveLinesFromOrFail(nodesFile)
+    val namesIt = retrieveLinesFromOrFail(namesFile)
 
-    // Generate tree map with the taxonomic root we need, to force that the only
-    // considered nodes ara Archaea and Bacteria
-    val treeMap: TreeMap = io.generateNodesMap(nodesIt)
-
-    // Auxiliary information: names and ranks
+    // Generate tree map and auxiliary information: names and ranks
+    val treeMap: TreeMap             = io.generateNodesMap(nodesIt)
     val namesMap: Map[TaxID, String] = io.generateNamesMap(namesIt)
+    val ranksMap: Map[TaxID, Rank]   = io.generateRanksMap(namesIt)
 
     // Convert to TaxTree
     val fullTree: TaxTree = treeMapToTaxTree(treeMap, data.rootID)
 
+    // Extract environmental subtree positions
     val envTree: Array[NodePosition] = fullTree.subTreeIndices({ node =>
       api.NameType.isEnvironmental(namesMap(node.payload))
     })
 
+    // Extract unclassified subtree positions
     val uncTree: Array[NodePosition] = fullTree.subTreeIndices({ node =>
       api.NameType.isUnclassified(namesMap(node.payload))
     })
 
+    // Build classified tree
     val claTree: TaxTree = fullTree.pruneAll({ node =>
       !api.NameType.isClassified(namesMap(node.payload))
     })
 
+    // Build environmental, unclassified and classified TreeMaps
     val envMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, envTree)
     val uncMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, uncTree)
     val claMap: TreeMap = taxTreeToTreeMap(claTree)

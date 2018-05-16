@@ -64,3 +64,31 @@ case object utils {
     else
       Left(Error.FileNotFound(s"Error reading $file: file does not exist."))
 }
+
+class IOSuite extends org.scalatest.FunSuite {
+  def getOrFail[E <: Error, X]: E + X => X =
+    _ match {
+      case Right(x) => x
+      case Left(e)  => fail(e.msg)
+    }
+
+  def downloadOrFail(s3Object: S3Object, file: File) =
+    getOrFail {
+      downloadFrom(s3Object, file)
+    }
+
+  def createDirectoryOrFail(dir: File) =
+    getOrFail {
+      createDirectory(dir)
+    }
+
+  def retrieveLinesFromOrFail(file: File) =
+    getOrFail {
+      retrieveLinesFrom(file)
+    }
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
+  }
+
+}
