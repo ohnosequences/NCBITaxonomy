@@ -1,15 +1,10 @@
 package ohnosequences.db.taxonomy.test
 
-import ohnosequences.db.taxonomy.test.IOSuite
-import ohnosequences.db.taxonomy.test.utils.{
-  createDirectory,
-  downloadFrom,
-  retrieveLinesFrom
-}
 import ohnosequences.db.taxonomy._
-import ohnosequences.api.ncbitaxonomy.{Rank, TaxID, TreeMap, io}
+import ohnosequences.api.ncbitaxonomy.{Rank, TaxID, TaxTree, TreeMap, io}
 import ohnosequences.test.ReleaseOnlyTest
 import ohnosequences.awstools.s3.S3Object
+import ohnosequences.trees.io.{fromCSV, toCSV}
 import ohnosequences.trees.{Index, Node, NodePosition, Tree, TreeIndices}
 import java.io.File
 
@@ -32,15 +27,15 @@ class GenerateTrees extends IOSuite {
     val ranksMap: Map[TaxID, Rank]   = io.generateRanksMap(namesIt)
 
     // Convert to TaxTree
-    val fullTree: TaxTree = treeMapToTaxTree(treeMap, data.rootID)
+    val fullTree: TaxTree = io.treeMapToTaxTree(treeMap, data.rootID)
 
     // Extract environmental subtree positions
-    val envTree: Array[NodePosition] = fullTree.subTreeIndices({ node =>
+    val envTree: TaxTree = fullTree.subTree({ node =>
       api.NameType.isEnvironmental(namesMap(node.payload))
     })
 
     // Extract unclassified subtree positions
-    val uncTree: Array[NodePosition] = fullTree.subTreeIndices({ node =>
+    val uncTree: TaxTree = fullTree.subTree({ node =>
       api.NameType.isUnclassified(namesMap(node.payload))
     })
 
@@ -49,14 +44,42 @@ class GenerateTrees extends IOSuite {
       !api.NameType.isClassified(namesMap(node.payload))
     })
 
-    // Build environmental, unclassified and classified TreeMaps
-    val envMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, envTree)
-    val uncMap: TreeMap = taxSubTreeIndicesToTreeMap(fullTree, uncTree)
-    val claMap: TreeMap = taxTreeToTreeMap(claTree)
+    def taxIDToString: TaxID => String = _.toString
 
-    claMap foreach {
-      case (k, v) => assert { api.NameType.isClassified(namesMap(k)) }
+    assert {
+      toCSV(envTree, taxIDToString).right
+        .map(linesToFileOrFail(new File("./env.csv")))
+        .isRight
     }
+    assert {
+      toCSV(uncTree, taxIDToString).right
+        .map(linesToFileOrFail(new File("./unc.csv")))
+        .isRight
+    }
+    assert {
+      toCSV(claTree, taxIDToString).right
+        .map(linesToFileOrFail(new File("./cla.csv")))
+        .isRight
+    }
+    assert {
+      toCSV(fullTree, taxIDToString).right
+        .map(linesToFileOrFail(new File("./full.csv")))
+        .isRight
+    }
+  }
+
+  test("Read trees", ReleaseOnlyTest) {
+    def stringToTaxID: String => TaxID = _.toInt
+
+    val fullLines = retrieveLinesFromOrFail(new File("./full.csv"))
+    val envLines  = retrieveLinesFromOrFail(new File("./env.csv"))
+    val uncLines  = retrieveLinesFromOrFail(new File("./unc.csv"))
+    val claLines  = retrieveLinesFromOrFail(new File("./cla.csv"))
+
+    assert { fromCSV(envLines, stringToTaxID).isRight }
+    assert { fromCSV(uncLines, stringToTaxID).isRight }
+    assert { fromCSV(claLines, stringToTaxID).isRight }
+    assert { fromCSV(fullLines, stringToTaxID).isRight }
   }
 
   // test("Tree length") {

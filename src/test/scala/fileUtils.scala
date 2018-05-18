@@ -13,6 +13,7 @@ case object Error {
   final case class Download(val msg: String)     extends Error
   final case class DirCreation(val msg: String)  extends Error
   final case class FileNotFound(val msg: String) extends Error
+  final case class WriteFailure(val msg: String) extends Error
 }
 
 case object utils {
@@ -56,16 +57,42 @@ case object utils {
       Right(directory)
 
   /**
-    * Returns `Right(Iterator[String])` if it was possible to read the lines from the file, `Left(Error.FileNotFound(msg))` otherwise.
+    * Returns `Right(Iterator[String])` if it was possible to read the lines
+    * from the file, `Left(Error.FileNotFound(msg))` otherwise.
     */
   def retrieveLinesFrom(file: File): Error.FileNotFound + Iterator[String] =
     if (file.exists)
       Right(io.Source.fromFile(file.getCanonicalPath).getLines)
     else
       Left(Error.FileNotFound(s"Error reading $file: file does not exist."))
+
+  def printToFile(file: File)(
+      op: java.io.PrintWriter => Unit
+  ): Error.WriteFailure + File = {
+    val p = new java.io.PrintWriter(file)
+    try {
+      op(p)
+      Right(file)
+    } catch {
+      case e: Throwable =>
+        Left(
+          Error.WriteFailure(
+            s"Exception raised when trying to write to file $file: $e"
+          ))
+    } finally {
+      p.close()
+    }
+  }
+
+  def linesToFile(file: File)(
+      lines: Iterator[String]
+  ): Error.WriteFailure + File =
+    printToFile(file) { p =>
+      lines.foreach(p.println)
+    }
 }
 
-class IOSuite extends org.scalatest.FunSuite {
+abstract class IOSuite extends org.scalatest.FunSuite {
   def getOrFail[E <: Error, X]: E + X => X =
     _ match {
       case Right(x) => x
@@ -74,21 +101,21 @@ class IOSuite extends org.scalatest.FunSuite {
 
   def downloadOrFail(s3Object: S3Object, file: File) =
     getOrFail {
-      downloadFrom(s3Object, file)
+      utils.downloadFrom(s3Object, file)
     }
 
   def createDirectoryOrFail(dir: File) =
     getOrFail {
-      createDirectory(dir)
+      utils.createDirectory(dir)
     }
 
   def retrieveLinesFromOrFail(file: File) =
     getOrFail {
-      retrieveLinesFrom(file)
+      utils.retrieveLinesFrom(file)
     }
-  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
-    val p = new java.io.PrintWriter(f)
-    try { op(p) } finally { p.close() }
-  }
 
+  def linesToFileOrFail(file: File)(lines: Iterator[String]) =
+    getOrFail {
+      utils.linesToFile(file)(lines)
+    }
 }
