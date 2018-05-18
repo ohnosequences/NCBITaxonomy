@@ -3,9 +3,7 @@ package ohnosequences.db.taxonomy.test
 import ohnosequences.db.taxonomy._
 import ohnosequences.api.ncbitaxonomy.{Rank, TaxID, TaxTree, TreeMap, io}
 import ohnosequences.test.ReleaseOnlyTest
-import ohnosequences.awstools.s3.S3Object
-import ohnosequences.trees.io.{fromCSV, toCSV}
-import ohnosequences.trees.{Index, Node, NodePosition, Tree, TreeIndices}
+import ohnosequences.trees.io.{fromCSV}
 import java.io.File
 
 class GenerateTrees extends IOSuite {
@@ -46,35 +44,29 @@ class GenerateTrees extends IOSuite {
 
     def taxIDToString: TaxID => String = _.toString
 
-    assert {
-      toCSV(envTree, taxIDToString).right
-        .map(linesToFileOrFail(new File("./env.csv")))
-        .isRight
-    }
-    assert {
-      toCSV(uncTree, taxIDToString).right
-        .map(linesToFileOrFail(new File("./unc.csv")))
-        .isRight
-    }
-    assert {
-      toCSV(claTree, taxIDToString).right
-        .map(linesToFileOrFail(new File("./cla.csv")))
-        .isRight
-    }
-    assert {
-      toCSV(fullTree, taxIDToString).right
-        .map(linesToFileOrFail(new File("./full.csv")))
-        .isRight
-    }
+    val envIterator  = toCSVOrFail(envTree, taxIDToString)
+    val uncIterator  = toCSVOrFail(uncTree, taxIDToString)
+    val claIterator  = toCSVOrFail(claTree, taxIDToString)
+    val fullIterator = toCSVOrFail(fullTree, taxIDToString)
+
+    linesToFileOrFail(envFile)(envIterator)
+    linesToFileOrFail(uncFile)(uncIterator)
+    linesToFileOrFail(claFile)(claIterator)
+    linesToFileOrFail(fullFile)(fullIterator)
+
+    uploadToOrFail(envFile, s3.environmentalTree)
+    uploadToOrFail(uncFile, s3.unclassifiedTree)
+    uploadToOrFail(claFile, s3.classifiedTree)
+    uploadToOrFail(fullFile, s3.fullTree)
   }
 
   test("Read trees", ReleaseOnlyTest) {
     def stringToTaxID: String => TaxID = _.toInt
 
-    val fullLines = retrieveLinesFromOrFail(new File("./full.csv"))
-    val envLines  = retrieveLinesFromOrFail(new File("./env.csv"))
-    val uncLines  = retrieveLinesFromOrFail(new File("./unc.csv"))
-    val claLines  = retrieveLinesFromOrFail(new File("./cla.csv"))
+    val fullLines = retrieveLinesFromOrFail(fullFile)
+    val envLines  = retrieveLinesFromOrFail(envFile)
+    val uncLines  = retrieveLinesFromOrFail(uncFile)
+    val claLines  = retrieveLinesFromOrFail(claFile)
 
     assert { fromCSV(envLines, stringToTaxID).isRight }
     assert { fromCSV(uncLines, stringToTaxID).isRight }

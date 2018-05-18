@@ -1,5 +1,7 @@
 package ohnosequences.db
 
+import ohnosequences.awstools.s3._ // S3{Folder,Object} and s3"" string creation
+
 package object taxonomy {
   private[taxonomy] type +[A, B] =
     Either[A, B]
@@ -8,23 +10,25 @@ package object taxonomy {
     String
 
   val version: String =
-    "0.2.0"
+    "0.4.0"
 
-  val s3Prefix: S3Folder =
-    s3"resources.ohnosequences.com" /
-      "db" /
-      "taxonomy" /
-      version /
+  case object s3 {
+    val prefix: S3Folder =
+      s3"resources.ohnosequences.com" /
+        "db" /
+        "taxonomy" /
+        version /
 
-  val fullTree: S3Object =
-    s3Prefix / "full.tree"
+    val fullTree: S3Object =
+      prefix / "full.tree"
 
-  val environmentalTree: S3Object =
-    s3Prefix / "environmental.tree"
+    val environmentalTree: S3Object =
+      prefix / "environmental.tree"
 
-  val unclassifiedTree: S3Object =
-    s3Prefix / "unclassified.tree"
+    val unclassifiedTree: S3Object =
+      prefix / "unclassified.tree"
 
-  val classifiedTree: S3Object =
-    s3Prefix / "classified.tree"
+    val classifiedTree: S3Object =
+      prefix / "classified.tree"
+  }
 }

@@ -1,6 +1,8 @@
 package ohnosequences.db.taxonomy.test
 
 import ohnosequences.db.taxonomy.+
+import ohnosequences.api.ncbitaxonomy.{TaxID, TaxTree}
+import ohnosequences.trees
 import ohnosequences.awstools.s3, s3.S3Object
 import java.io.File
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
@@ -11,9 +13,11 @@ sealed trait Error {
 
 case object Error {
   final case class Download(val msg: String)     extends Error
+  final case class Upload(val msg: String)       extends Error
   final case class DirCreation(val msg: String)  extends Error
   final case class FileNotFound(val msg: String) extends Error
   final case class WriteFailure(val msg: String) extends Error
+  final case class ToCSVFailure(val msg: String) extends Error
 }
 
 case object utils {
@@ -90,6 +94,25 @@ case object utils {
     printToFile(file) { p =>
       lines.foreach(p.println)
     }
+
+  /**
+    * Returns `Right(s3Object)` if the upload from `file` to `s3Object`
+    * succeeded, ``Left(Error.Upload(msg))`` otherwise.
+    */
+  def uploadTo(file: File, s3Object: S3Object): Error.Upload + S3Object =
+    scala.util.Try {
+      s3.defaultClient.putObject(
+        s3Object.bucket,
+        s3Object.key,
+        file
+      )
+    } match {
+      case scala.util.Success(s) =>
+        Right(s3Object)
+      case scala.util.Failure(e) =>
+        Left(Error.Upload(s"Error uploading$file to $s3Object: ${e.toString}."))
+    }
+
 }
 
 abstract class IOSuite extends org.scalatest.FunSuite {
@@ -117,5 +140,17 @@ abstract class IOSuite extends org.scalatest.FunSuite {
   def linesToFileOrFail(file: File)(lines: Iterator[String]) =
     getOrFail {
       utils.linesToFile(file)(lines)
+    }
+
+  def uploadToOrFail(file: File, s3Object: S3Object) =
+    getOrFail {
+      utils.uploadTo(file, s3Object)
+    }
+
+  def toCSVOrFail(tree: TaxTree, name: TaxID => String) =
+    getOrFail {
+      trees.io.toCSV(tree, name).left.map { err =>
+        Error.ToCSVFailure(s"Error writing line to CSV: $err")
+      }
     }
 }

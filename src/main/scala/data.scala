@@ -1,7 +1,6 @@
 package ohnosequences.db.taxonomy
 
 import ohnosequences.api.ncbitaxonomy.TaxID
-import ohnosequences.trees.Node
 
 object data {
   val rootID: TaxID     = 1
