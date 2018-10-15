@@ -1,17 +1,34 @@
-package ohnosequences
+package ohnosequences.db
 
-import com.thinkaurelius.titan.core._, schema._
-import com.bio4j.titan.util.DefaultTitanGraph
+import ohnosequences.awstools.s3._ // S3{Folder,Object} and s3"" string creation
 
-package object ncbitaxonomy {
+package object taxonomy {
+  private[taxonomy] type +[A, B] =
+    Either[A, B]
 
-  type TitanNode =
-    com.bio4j.model.ncbiTaxonomy.vertices.NCBITaxon[
-      DefaultTitanGraph,
-      TitanVertex, VertexLabelMaker,
-      TitanEdge, EdgeLabelMaker
-    ]
+  type ScientificName =
+    String
 
-  final def optional[T](jopt: java.util.Optional[T]): Option[T] =
-    if (jopt.isPresent) Some(jopt.get) else None
+  val version: String =
+    "0.4.0"
+
+  case object s3 {
+    val prefix: S3Folder =
+      s3"resources.ohnosequences.com" /
+        "db" /
+        "taxonomy" /
+        version /
+
+    val fullTree: S3Object =
+      prefix / "full.tree"
+
+    val environmentalTree: S3Object =
+      prefix / "environmental.tree"
+
+    val unclassifiedTree: S3Object =
+      prefix / "unclassified.tree"
+
+    val classifiedTree: S3Object =
+      prefix / "classified.tree"
+  }
 }

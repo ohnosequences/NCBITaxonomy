@@ -1,5 +1,5 @@
 # sbt specific
-dist/*
+dist/
 target/
 boot/
 lib_managed/
@@ -14,9 +14,15 @@ project/plugins/project/
 data/in/
 data/out/
 
+project/project/
+project/target/
+
+# editors
 .tags*
 .sublime*
 .atom*
 .ensime*
 .idea*
+.vscode*
+
 /.gtm/
