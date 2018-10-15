@@ -9,20 +9,20 @@ case object api {
     case object EnvironmentalSample extends NameType
     case object Unclassified        extends NameType
 
-    def isUnclassified: ScientificName => Boolean =
-      _.toLowerCase contains "unclassified"
+    def isUnclassified: TaxNode => Boolean =
+      _.name.toLowerCase contains "unclassified"
 
-    def isEnvironmental: ScientificName => Boolean =
-      _.toLowerCase startsWith "environmental sample"
+    def isEnvironmental: TaxNode => Boolean =
+      _.name.toLowerCase startsWith "environmental sample"
 
-    def isClassified: ScientificName => Boolean =
-      name => !isEnvironmental(name) && !isUnclassified(name)
+    def isClassified: TaxNode => Boolean =
+      node => !isEnvironmental(node) && !isUnclassified(node)
 
-    def get: ScientificName => NameType =
-      scientificName => {
-        if (isEnvironmental(scientificName))
+    def get: TaxNode => NameType =
+      node => {
+        if (isEnvironmental(node))
           NameType.Unclassified
-        else if (isUnclassified(scientificName))
+        else if (isUnclassified(node))
           NameType.EnvironmentalSample
         else
           NameType.Normal

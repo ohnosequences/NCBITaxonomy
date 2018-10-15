@@ -1,8 +1,9 @@
 package ohnosequences.db.taxonomy
 
-import ohnosequences.db.ncbiTaxonomy.{Version => NCBIVersion}
+import ohnosequences.db.ncbitaxonomy.{Version => NCBIVersion}
+import ohnosequences.s3.S3Object
 
-sealed abstract class Version(
+sealed abstract class Version {
   val name: String
   val ncbiVersion: NCBIVersion
 }
@@ -15,7 +16,7 @@ case object Version {
   val all: Set[Version] = Set(_0_4_0)
 
   case object _0_4_0 extends Version {
-    val name = "0.4.0"
+    val name        = "0.4.0"
     val ncbiVersion = NCBIVersion._0_1_0
   }
 }
