@@ -1,34 +1,55 @@
 package ohnosequences.db
 
-import ohnosequences.awstools.s3._ // S3{Folder,Object} and s3"" string creation
+import ohnosequences.s3._
+import ohnosequences.db.ncbitaxonomy.{
+  treeData,
+  treeDataFile,
+  treeShape,
+  treeShapeFile
+}
 
 package object taxonomy {
-  private[taxonomy] type +[A, B] =
-    Either[A, B]
+  type +[A, B] = Either[A, B]
 
-  type ScientificName =
-    String
+  type ScientificName = db.ncbitaxonomy.ScientificName
 
-  val version: String =
-    "0.4.0"
+  def s3Prefix(version: Version): S3Folder =
+    s3"resources.ohnosequences.com" /
+      "db" /
+      "taxonomy" /
+      version.name /
 
-  case object s3 {
-    val prefix: S3Folder =
-      s3"resources.ohnosequences.com" /
-        "db" /
-        "taxonomy" /
-        version /
+  val environmentalS3(version): S3Folder =
+    s3Prefix(version) / "environmental"
 
-    val fullTree: S3Object =
-      prefix / "full.tree"
+  val unclassifiedS3(version): S3Folder =
+    s3Prefix(version) / "unclassified"
 
-    val environmentalTree: S3Object =
-      prefix / "environmental.tree"
+  val goodS3(version): S3Folder =
+    s3Prefix(version) / "good"
 
-    val unclassifiedTree: S3Object =
-      prefix / "unclassified.tree"
+  val fullTree(version: Version): TreeInS3 =
+    TreeInS3(
+      treeData(version.ncbiVersion),
+      treeShape(version.ncbiVersion)
+    )
 
-    val classifiedTree: S3Object =
-      prefix / "classified.tree"
-  }
+  val environmentalTree(version: Version): TreeInS3 =
+    TreeInS3(
+      environmentalS3(version) / treeDataFile,
+      environmentalS3(version) / treeShapeFile
+    )
+
+  val unclassifiedTree: TreeInS3 =
+    TreeInS3(
+      unclassifiedS3(version) / treeDataFile,
+      unclassifiedS3(version) / treeShapeFile
+    )
+
+  val goodTree: TreeInS3 =
+    TreeInS3(
+      goodS3(version) / treeDataFile,
+      goodS3(version) / treeShapeFile
+    )
+
 }
