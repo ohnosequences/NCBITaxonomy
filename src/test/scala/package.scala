@@ -10,7 +10,12 @@ import ohnosequences.db.ncbitaxonomy.{TaxTree, io}
 
 package object test {
   type File  = ohnosequences.files.File
-  type Lines = ohnosequences.files.Lines
+
+  type TaxTree = ohnosequences.db.ncbitaxonomy.TaxTree
+
+  private[test] treeDataFile = ohnosequences.db.ncbitaxonomy.treeDataFile
+
+  private[test] treeShapeFile = ohnosequences.db.ncbitaxonomy.treeShapeFile
 
   private val partSize5MiB = 5 * 1024 * 1024
 
@@ -107,17 +112,9 @@ package object test {
       file.move(source, destination)
     }
 
-  def getDataFile(version: Version): File =
-    downloadFromS3IfNotExists(nodes(version), data.nodesLocalFile(version))
-
-  def getShapeFile(version: Version): File =
-    downloadFromS3IfNotExists(names(version), data.namesLocalFile(version))
-
   def getTreeDataFile(version: Version): File =
-    downloadFromS3IfNotExists(treeData(version),
-                              data.treeDataLocalFile(version))
+    downloadFromS3IfNotExists(nodes(version), data.treeDataLocalFile(version))
 
   def getTreeShapeFile(version: Version): File =
-    downloadFromS3IfNotExists(treeShape(version),
-                              data.treeShapeLocalFile(version))
+    downloadFromS3IfNotExists(names(version), data.treeShapeLocalFile(version))
 }

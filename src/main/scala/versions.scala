@@ -1,7 +1,6 @@
 package ohnosequences.db.taxonomy
 
 import ohnosequences.db.ncbitaxonomy.{Version => NCBIVersion}
-import ohnosequences.s3.S3Object
 
 sealed abstract class Version {
   val name: String
@@ -20,5 +19,3 @@ case object Version {
     val ncbiVersion = NCBIVersion._0_1_0
   }
 }
-
-final case class TreeInS3(data: S3Object, shape: S3Object)
