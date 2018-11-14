@@ -3,23 +3,25 @@ package ohnosequences.db.taxonomy
 import ohnosequences.db.ncbitaxonomy.{Version => NCBIVersion}
 import ohnosequences.files.digest.DigestFunction
 
-sealed abstract class Version {
-  val name: String
-  val ncbiVersion: NCBIVersion
+sealed abstract class Version (val name: String) {
+  val inputVersion: NCBIVersion
+
+  override final def toString: String = name
 }
 
 case object Version {
 
   /** All versions of the database */
-  lazy val all: Set[Version] = Set(_0_4_0)
+  val all: Set[Version] = Set(v0_4_0)
 
   /** This points to the last version */
-  val latest: Version   = _0_4_0
+  val latest: Version   = v0_4_0
 
-  case object _0_4_0 extends Version {
-    val name        = "0.4.0"
-    val ncbiVersion = NCBIVersion._0_1_0
+  case object v0_4_0 extends Version("0.4.0") {
+    val inputVersion = NCBIVersion._0_1_0
   }
+
+  type v0_4_0 = v0_4_0.type
 }
 
 case object data {
@@ -36,27 +38,20 @@ case object data {
           "db" /
           "taxonomy" /
           "unstable" /
-          version.name /
+          version /
       case _ =>
         s3"resources.ohnosequences.com" /
           "db" /
           "taxonomy" /
-          version.name /
+          version /
     }
 
-  /** Returns the path of a data file for a type of tree
+  /** Returns the path of a folder for a [[TreeType]]
     *
     * @param treeType the [[TreeType]]
     */
-  def dataFile(treeType: TreeType): String =
-    treeType.name + "/" + treeDataFile
-
-  /** Returns the path of a shape file for a type of tree
-    *
-    * @param treeType the [[TreeType]]
-    */
-  def shapeFile(treeType: TreeType): String =
-    treeType.name + "/" + treeShapeFile
+  def typeFolder(localFolder: File, treeType: TreeType): String =
+    new File(localFolder, treeType.name)
 
   /** Returns the S3 object containing the mirrored data file for a taxonomy 
     * tree (full, good, environmental, unclassified)
@@ -66,13 +61,13 @@ case object data {
     * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
     */
   def treeData(version: Version, treeType: TreeType): S3Object = {
-    val ncbiVersion = version.ncbiVersion
+    val ncbiVersion = version.inputVersion
 
     treeType match {
       case TreeType.Full =>
         db.ncbitaxonomy.treeData(ncbiVersion)
       case _  =>
-        prefix(version) / dataFile(treeType)        
+        prefix(version) / treeType / treeDataFile
     }
   }
 
@@ -84,13 +79,13 @@ case object data {
     * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
     */
   def treeShape(version: Version, treeType: TreeType): S3Object = {
-    val ncbiVersion = version.ncbiVersion
+    val ncbiVersion = version.inputVersion
 
     treeType match {
       case TreeType.Full =>
         db.ncbitaxonomy.treeShape(ncbiVersion)
       case _  =>
-        prefix(version) / shapeFile(treeType)
+        prefix(version) / treeType / treeShapeFile
     }
   }
 
@@ -105,6 +100,7 @@ case object data {
 
   // Local files
   case object local {
+
     /** Returns the local path of the data file for a taxonomy tree
       * (full, good, environmental, unclassified)
       * 
@@ -114,7 +110,7 @@ case object data {
       * @param localFolder where the path for the tree is going to be built
       */
     def treeData(version: Version, treeType: TreeType, localFolder: File): File = {
-      new File(localFolder, dataFile(treeType))
+      new File(typeFolder(localFolder, treeType), treeDataFile)
     }
 
     /** Returns the local path of the shape file for a taxonomy tree
@@ -126,7 +122,7 @@ case object data {
       * @param localFolder where the path for the tree is going to be built
       */
     def treeShape(version: Version, treeType: TreeType, localFolder: File): File = {
-      new File(localFolder, shapeFile(treeType))
+      new File(typeFolder(localFolder, treeType), treeShapeFile)
     }
   }
 }

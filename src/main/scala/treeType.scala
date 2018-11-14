@@ -1,6 +1,8 @@
 package ohnosequences.db.taxonomy
 
-sealed abstract class TreeType(val name: String)
+sealed abstract class TreeType(val name: String) {
+  override final def toString: String = name
+}
 
 case object TreeType {
 
@@ -15,6 +17,8 @@ case object TreeType {
 
   final case object Unclassified extends TreeType("unclassified")
   type Unclassified = Unclassified.type
+
+  val all = Set(Good, Environmental, Unclassified)
 
   val isUnclassified: TaxNode => Boolean =
     _.name.toLowerCase contains "unclassified"

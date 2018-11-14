@@ -2,7 +2,7 @@ package ohnosequences.db
 
 import ohnosequences.s3._
 import ohnosequences.db
-import ohnosequences.db.ncbitaxonomy.{treeDataFile, treeShapeFile}
+import ohnosequences.db.ncbitaxonomy.{treeDataFile, treeShapeFile, io}
 import ohnosequences.forests._
 
 package object taxonomy {
@@ -11,21 +11,13 @@ package object taxonomy {
   type TaxNode = db.ncbitaxonomy.TaxNode
   type TaxTree = Tree[TaxNode]
 
-  def s3Prefix(version: Version): S3Folder =
-    s3"resources.ohnosequences.com" /
-      "db" /
-      "taxonomy" /
-      version.name /
+  def taxTreeFromFiles(treeFiles: TreeFiles): Error + TaxTree = {
+    val readResult = readTaxTreeFromFiles(treeFiles.data, treeFiles.shape)
 
-  def treeData(version: Version, treeType: TreeType): S3Object =
-    treeType match {
-      case TreeType.Full => db.ncbitaxonomy.treeData(version.ncbiVersion)
-      case _             => s3Prefix(version) / treeType.name / treeDataFile
-    }
-
-  def treeShape(version: Version, treeType: TreeType): S3Object =
-    treeType match {
-      case TreeType.Full => db.ncbitaxonomy.treeShape(version.ncbiVersion)
-      case _             => s3Prefix(version) / treeType.name / treeShapeFile
-    }
+    readResult.fold(
+      err => err.fold(Error.FileError, Error.SerializationError),
+      identity
+    )
+  }
+    
 }
