@@ -2,8 +2,9 @@ package ohnosequences.db
 
 import ohnosequences.s3._
 import ohnosequences.db
-import ohnosequences.db.ncbitaxonomy.{treeDataFile, treeShapeFile, io}
-import ohnosequences.forests._
+import ohnosequences.forests.Tree
+import java.io.File
+import db.ncbitaxonomy.io
 
 package object taxonomy {
   type +[A, B] = Either[A, B]
@@ -11,13 +12,11 @@ package object taxonomy {
   type TaxNode = db.ncbitaxonomy.TaxNode
   type TaxTree = Tree[TaxNode]
 
-  def taxTreeFromFiles(treeFiles: TreeFiles): Error + TaxTree = {
-    val readResult = readTaxTreeFromFiles(treeFiles.data, treeFiles.shape)
+  def taxTreeFromFiles(data: File, shape: File): Error + TaxTree =
+    io.readTaxTreeFromFiles(data, shape)
+      .left
+      .map { err =>
+        err.fold(Error.FileError, Error.SerializationError)
+      }
 
-    readResult.fold(
-      err => err.fold(Error.FileError, Error.SerializationError),
-      identity
-    )
-  }
-    
 }

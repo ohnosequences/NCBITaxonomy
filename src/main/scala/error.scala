@@ -18,7 +18,7 @@ case object Error {
     val msg = err.msg
   }
 
-  final case class SerializationError(val err: forests.Error) extends Error {
+  final case class SerializationError(val err: forests.IOError) extends Error {
     val msg = err.msg
   }
 
