@@ -12,11 +12,18 @@ package object taxonomy {
   type TaxNode = db.ncbitaxonomy.TaxNode
   type TaxTree = Tree[TaxNode]
 
-  def taxTreeFromFiles(data: File, shape: File): Error + TaxTree =
+  def readTaxTreeFromFiles(data: File, shape: File): Error + TaxTree =
     io.readTaxTreeFromFiles(data, shape)
       .left
       .map { err =>
         err.fold(Error.FileError, Error.SerializationError)
       }
+
+  def dumpTaxTreeToFiles(tree: TaxTree,
+                         data: File,
+                         shape: File): Error + (File, File) =
+    io.dumpTaxTreeToFiles(tree, data, shape)
+      .left
+      .map(Error.FileError)
 
 }

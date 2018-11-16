@@ -41,7 +41,7 @@ case object data {
         s3"resources.ohnosequences.com" /
           "db" /
           "taxonomy" /
-          "unstable" /
+          "unstable2" /
           version.toString /
       case _ =>
         s3"resources.ohnosequences.com" /
@@ -54,8 +54,10 @@ case object data {
     *
     * @param treeType the [[TreeType]]
     */
-  def typeFolder(localFolder: File, treeType: TreeType): File =
-    new File(localFolder, treeType.toString)
+  def versionFolder(version: Version,
+                    treeType: TreeType,
+                    localFolder: File): File =
+    new File(localFolder, version.toString + "/" + treeType.toString)
 
   /** Returns the S3 object containing the mirrored data file for a taxonomy
     * tree (full, good, environmental, unclassified)
@@ -98,7 +100,7 @@ case object data {
     * @param version the [[Version]] we want to list the objects for
     */
   def everything(version: Version): Set[S3Object] =
-    TreeType.all.map { treeData(version, _) } | TreeType.all.map {
+    TreeType.exceptFull.map { treeData(version, _) } | TreeType.exceptFull.map {
       treeShape(version, _)
     }
 
@@ -118,7 +120,7 @@ case object data {
     def treeData(version: Version,
                  treeType: TreeType,
                  localFolder: File): File =
-      new File(typeFolder(localFolder, treeType), treeDataFile)
+      new File(versionFolder(version, treeType, localFolder), treeDataFile)
 
     /** Returns the local path of the shape file for a taxonomy tree
       * (full, good, environmental, unclassified)
@@ -131,6 +133,6 @@ case object data {
     def treeShape(version: Version,
                   treeType: TreeType,
                   localFolder: File): File =
-      new File(typeFolder(localFolder, treeType), treeShapeFile)
+      new File(versionFolder(version, treeType, localFolder), treeShapeFile)
   }
 }

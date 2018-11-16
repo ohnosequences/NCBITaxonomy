@@ -18,7 +18,9 @@ case object TreeType {
   final case object Unclassified extends TreeType("unclassified")
   type Unclassified = Unclassified.type
 
-  val all = Set(Good, Environmental, Unclassified)
+  val all: Set[TreeType] = Set(Full, Good, Environmental, Unclassified)
+
+  val exceptFull: Set[TreeType] = Set(Good, Environmental, Unclassified)
 
   val isUnclassified: TaxNode => Boolean =
     _.name.toLowerCase contains "unclassified"
