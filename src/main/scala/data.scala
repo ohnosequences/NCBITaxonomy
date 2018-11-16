@@ -31,7 +31,7 @@ case object Version {
 case object data {
 
   /** Folder where we are going to dump data locally */
-  val localFolder = new File("./data")
+  val localFolder: Version => File = version => new File(s"./data/${version}")
 
   /** Returns the S3Folder for a version
     *
@@ -44,7 +44,7 @@ case object data {
         s3"resources.ohnosequences.com" /
           "db" /
           "taxonomy" /
-          "unstable2" /
+          "unstable" /
           version.toString /
       case _ =>
         s3"resources.ohnosequences.com" /
@@ -57,9 +57,8 @@ case object data {
     *
     * @param treeType the [[TreeType]]
     */
-  def versionFolder(version: Version,
-                    treeType: TreeType): File =
-    new File(localFolder, version.toString + "/" + treeType.toString)
+  def versionFolder(version: Version, treeType: TreeType): File =
+    new File(localFolder(version), treeType.toString)
 
   /** Returns the S3 object containing the mirrored data file for a taxonomy
     * tree (full, good, environmental, unclassified)
@@ -118,9 +117,8 @@ case object data {
       * @param treeType the [[TreeType]] of the taxonomy we want: TreeType.Full,
       * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
       */
-    def treeData(version: Version,
-                 treeType: TreeType): File =
-      new File(versionFolder(version, treeType, localFolder), treeDataFile)
+    def treeData(version: Version, treeType: TreeType): File =
+      new File(versionFolder(version, treeType), treeDataFile)
 
     /** Returns the local path of the shape file for a taxonomy tree
       * (full, good, environmental, unclassified)
@@ -129,8 +127,7 @@ case object data {
       * @param treeType the [[TreeType]] of the taxonomy we want: TreeType.Full,
       * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
       */
-    def treeShape(version: Version,
-                  treeType: TreeType): File =
-      new File(versionFolder(version, treeType, localFolder), treeShapeFile)
+    def treeShape(version: Version, treeType: TreeType): File =
+      new File(versionFolder(version, treeType), treeShapeFile)
   }
 }

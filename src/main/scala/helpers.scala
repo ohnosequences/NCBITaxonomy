@@ -2,6 +2,7 @@ package ohnosequences.db.taxonomy
 
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import ohnosequences.s3._
+import ohnosequences.files.directory.createDirectory
 import java.io.File
 
 /**
@@ -60,7 +61,9 @@ private[taxonomy] case object helpers {
     * to the appropriate version for a given [[TreeType]], whenever they are
     * not already stored locally
     */
-  def downloadTreeIfNotInLocalFolder(version: Version, treeType: TreeType): Error + (File, File) {
+  def downloadTreeIfNotInLocalFolder(
+      version: Version,
+      treeType: TreeType): Error + (File, File) = {
     val s3Data     = data.treeData(version, treeType)
     val s3Shape    = data.treeShape(version, treeType)
     val localData  = data.local.treeData(version, treeType)

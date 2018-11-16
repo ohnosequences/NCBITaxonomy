@@ -135,15 +135,15 @@ case object release {
     * everything went smoothly. Otherwise a Left(error), where error can be due
     * to:
     */
-  private def mirrorVersion(version: Version
-  ): Error + Set[S3Object] = {
+  private def mirrorVersion(version: Version): Error + Set[S3Object] = {
+    val readTree = (readTaxTreeFromFiles _).tupled
 
     for {
-      _             <- createDirectories(version)
-      (data, shape) <- downloadTreeIfNotInLocalFolder(version, TreeType.Full)
-      fullTree      <- readTaxTreeFromFiles(data, shape)
-      toUpload      <- generateTreesFrom(fullTree, version)
-      result        <- uploadTrees(toUpload)
+      folders    <- createDirectories(version)
+      localFiles <- downloadTreeIfNotInLocalFolder(version, TreeType.Full)
+      fullTree   <- readTree(localFiles)
+      toUpload   <- generateTreesFrom(fullTree, version)
+      result     <- uploadTrees(toUpload)
     } yield {
       result
     }
