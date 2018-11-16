@@ -4,9 +4,9 @@ import ohnosequences.s3._
 import ohnosequences.forests.{EmptyTree, NonEmptyTree, Tree}, Tree._
 import ohnosequences.files.directory.createDirectory
 import java.io.File
+import helpers._
 
 case object release {
-  import s3Helpers._
 
   /** Generates Good, Environmental or Unclassified tree from the Full one
     *
@@ -14,7 +14,7 @@ case object release {
     * @param treeType a type from: [[TreeType.Good]], [[TreeType.Environmental]]
     * or [[TreeType.Unclassified]]
     */
-  def generateTree(fullTree: TaxTree, treeType: TreeType): TaxTree =
+  private def generateTree(fullTree: TaxTree, treeType: TreeType): TaxTree =
     fullTree match {
       case fullTree: EmptyTree[TaxNode] => fullTree
       case fullTree: NonEmptyTree[TaxNode] =>
@@ -39,53 +39,22 @@ case object release {
         }
     }
 
-  /** Generates the local directories for a version in a localFolder,
-    * that is, the structure:
-    *       - `${localFolder}/${version}/Good`
-    *       - `${localFolder}/${version}/Environmental`
-    *       - `${localFolder}/${version}/Unclassified`
-    *
-    * @param version the [[Version]] we want to generate
-    * @param localFolder indicating the folder whree to store data locally
-    * @return a Left(error) if something went wrong with any folder creation,
-    * otherswise a Right(files) where files is a collection of the created folders
-    */
-  private def createDirectories(version: Version,
-                                localFolder: File): Error + Set[File] = {
-    val dirsToCreate = TreeType.all.map { treeType =>
-      data.versionFolder(version, treeType, localFolder)
-    }
-
-    dirsToCreate
-      .map { dir =>
-        createDirectory(dir)
-      }
-      .find { createResult =>
-        createResult.isLeft
-      }
-      .fold(Right(dirsToCreate): Error + Set[File]) { err =>
-        err.left.map(Error.FileError).right.map(_ => Set.empty[File])
-      }
-  }
-
   /** Generates the Good, Environmental and Unclassified trees from the full one
     *
     * @param fullTree the Full [[TaxTree]]
     * @param version the [[Version]] we want to generate the trees for
-    * @param localFolder indicating the folder whree to store data locally
     * @return a Left(error) if something went wrong with any tree creation, otherwise
     * a Right(result) where result is a collection of pairs `(File, S3Object)` with
     * the generated files plus the S3 address where they should be stored
     */
   private def generateTreesFrom(
       fullTree: TaxTree,
-      version: Version,
-      localFolder: File): Error + Set[(File, S3Object)] = {
+      version: Version): Error + Set[(File, S3Object)] = {
 
     val localData: TreeType => File =
-      data.local.treeData(version, _, localFolder)
+      data.local.treeData(version, _)
     val localShape: TreeType => File =
-      data.local.treeShape(version, _, localFolder)
+      data.local.treeShape(version, _)
     val s3Data: TreeType => S3Object  = data.treeData(version, _)
     val s3Shape: TreeType => S3Object = data.treeShape(version, _)
 
@@ -160,30 +129,21 @@ case object release {
     *   5  Uploads them to S3
     *
     * @param version the [[Version]] we want to mirror
-    * @param localFolder the folder where we want to mirror the files
     *
     * @return Right(objects) where objects is a collection of all the mirrored
     * files (a `data.tree` file and a `shape.tree` file per `TreeType`) if
     * everything went smoothly. Otherwise a Left(error), where error can be due
     * to:
     */
-  private def mirrorVersion(
-      version: Version,
-      localFolder: File
+  private def mirrorVersion(version: Version
   ): Error + Set[S3Object] = {
 
-    val s3Data     = data.treeData(version, TreeType.Full)
-    val s3Shape    = data.treeShape(version, TreeType.Full)
-    val localData  = data.local.treeData(version, TreeType.Full, localFolder)
-    val localShape = data.local.treeShape(version, TreeType.Full, localFolder)
-
     for {
-      _        <- createDirectories(version, localFolder)
-      _        <- getFileIfDifferent(s3Data, localData)
-      _        <- getFileIfDifferent(s3Shape, localShape)
-      fullTree <- readTaxTreeFromFiles(localData, localShape)
-      toUpload <- generateTreesFrom(fullTree, version, localFolder)
-      result   <- uploadTrees(toUpload)
+      _             <- createDirectories(version)
+      (data, shape) <- downloadTreeIfNotInLocalFolder(version, TreeType.Full)
+      fullTree      <- readTaxTreeFromFiles(data, shape)
+      toUpload      <- generateTreesFrom(fullTree, version)
+      result        <- uploadTrees(toUpload)
     } yield {
       result
     }
@@ -213,25 +173,20 @@ case object release {
     * upload them to S3
     *
     * It does so iff no object (there is a data file and a shape file per
-    * tree) exists for any of the trees, the local folder can be created,
+    * tree) exists for any of the trees, the [[data.localFolder]] can be created,
     * the full tree files are equal to the remote files / can be successfully
     * downloaded and everything goes smoothly with each of the taxonomic trees
     * creation
     *
     * @param version is the new version that wants to be released
-    * @param localFolder is the localFolder where the downloaded files will be
-    * stored.
     *
     * @return an Error + Set[S3Object], with a Right(set) with all the mirrored
     * S3 objects if everything worked as expected or with a Left(error) if an
     * error occurred.
     */
-  def mirrorNewVersion(
-      version: Version,
-      localFolder: File
-  ): Error + Set[S3Object] =
+  def mirrorNewVersion(version: Version): Error + Set[S3Object] =
     findVersionInS3(version).fold(
-      mirrorVersion(version, localFolder)
+      mirrorVersion(version)
     ) { obj =>
       Left(Error.S3ObjectExists(obj))
     }

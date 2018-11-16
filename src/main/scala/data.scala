@@ -30,6 +30,9 @@ case object Version {
 
 case object data {
 
+  /** Folder where we are going to dump data locally */
+  val localFolder = new File("./data")
+
   /** Returns the S3Folder for a version
     *
     * @param version a [[Version]]
@@ -55,8 +58,7 @@ case object data {
     * @param treeType the [[TreeType]]
     */
   def versionFolder(version: Version,
-                    treeType: TreeType,
-                    localFolder: File): File =
+                    treeType: TreeType): File =
     new File(localFolder, version.toString + "/" + treeType.toString)
 
   /** Returns the S3 object containing the mirrored data file for a taxonomy
@@ -115,11 +117,9 @@ case object data {
       * @param version the [[Version]] of the taxonomy we want
       * @param treeType the [[TreeType]] of the taxonomy we want: TreeType.Full,
       * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
-      * @param localFolder where the path for the tree is going to be built
       */
     def treeData(version: Version,
-                 treeType: TreeType,
-                 localFolder: File): File =
+                 treeType: TreeType): File =
       new File(versionFolder(version, treeType, localFolder), treeDataFile)
 
     /** Returns the local path of the shape file for a taxonomy tree
@@ -128,11 +128,9 @@ case object data {
       * @param version the [[Version]] of the taxonomy we want
       * @param treeType the [[TreeType]] of the taxonomy we want: TreeType.Full,
       * TreeType.Good, TreeType.Environmental, TreeType.Unclassified
-      * @param localFolder where the path for the tree is going to be built
       */
     def treeShape(version: Version,
-                  treeType: TreeType,
-                  localFolder: File): File =
+                  treeType: TreeType): File =
       new File(versionFolder(version, treeType, localFolder), treeShapeFile)
   }
 }
