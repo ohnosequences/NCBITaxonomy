@@ -2,7 +2,6 @@ package ohnosequences.db.taxonomy
 
 import ohnosequences.s3._
 import ohnosequences.forests.{EmptyTree, NonEmptyTree, Tree}, Tree._
-import ohnosequences.files.directory.createDirectory
 import java.io.File
 import helpers._
 

@@ -1,6 +1,5 @@
 package ohnosequences.db
 
-import ohnosequences.s3._
 import ohnosequences.db
 import ohnosequences.forests.Tree
 import java.io.File
