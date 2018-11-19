@@ -46,11 +46,11 @@ All the data in `db.taxonomy` is versioned, based on a version of our NCBI taxon
   
 Each of these versions is encoded as an object that extends the sealed class `Version` in [`data.scala`](src/main/scala/data.scala).
 
-The `Set` `Version.all` contains all the releases supported. `Version.latest` is a pointer to the latest released version.
+The `Set` `Version.all` includes all the supported releases. `Version.latest` is a pointer to the latest released version.
 
 ## Files
 
-The module [`db.taxonomy.data`](src/main/scala/data.scala) contains the paths of the S3 object corresponding to the tree data and shape files for a `Version` and a `TreeType`. They be accessed evaluating the following methods over a `Version` object:
+The module [`db.taxonomy.data`](src/main/scala/data.scala) contains the paths of the S3 object corresponding to the tree data and shape files for a `Version` and a `TreeType`. They can be accessed evaluating the following methods over a `Version` and `TreeType` objects:
 
 ```scala
 treeData : (Version, TreeType) => S3Object
@@ -59,7 +59,7 @@ treeShape: (Version, TreeType) => S3Object
 
 ## Tree
 
-The taxonomic tree of a `TreeType` for a `Version`, in case it can be retrieved / read from local files, is made available through `db.taxonomy.tree`.
+The taxonomic tree for a `Version` and `TreeType`, in case it can be retrieved / read from local files, is made available through the `db.taxonomy.tree` method.
 
 Folder for downloaded data is given by `data.localFolder`.
 
@@ -79,11 +79,13 @@ maybeTree.map { tree =>
 
 ## License
 
-- The *code* which generates the database is licensed under the **[AGPLv3]** license
-- The *database* itself is made available under the **[ODbLv1]** license.
+- The *code* which generates the database is licensed under the **[AGPLv3]** license: [license/code](license/code)
+- The *database* itself is made available under the **[ODbLv1]** license: [license/db](license/db)
 - The database *contents* are available under their respective licenses. As far as we can tell all data included in *db.fragments16s* could be considered **free** for any use; do note that sequences and annotations coming from SILVA, which has a restrictive license, are excluded from *db.fragments16s*.
 
 See the [open data commons FAQ](http://opendatacommons.org/faq/licenses/#db-versus-contents) for more on this distinction between database and contents.
 
 [latest-release]: https://github.com/ohnosequences/db.taxonomy/releases/latest
 [db.ncbitaxonomy]: https://github.com/ohnosequences/db.ncbitaxonomy
+[ODbLv1]: http://opendatacommons.org/licenses/odbl/1.0/
+[AGPLv3]: https://www.gnu.org/licenses/agpl-3.0.en.html

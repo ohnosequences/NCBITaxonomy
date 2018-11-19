@@ -9,21 +9,19 @@ Fourth release of the package:
 
 ## Data Pointers
 
-The [`ohnosequences.db.taxonomy.data.treeData`] and [`ohnosequences.db.taxonomy.data.treeShape`] methods return, for a `Version` (which has an `inputVersion` of NCBI data) an S3 address for the `data.tree` and `shape.tree` files for a given tree, which are necessary to deserialize the data:
+The `ohnosequences.db.taxonomy.data.treeData` and `ohnosequences.db.taxonomy.data.treeShape` methods return, for a `Version` (which has an `inputVersion` of NCBI data) an S3 address for the `data.tree` and `shape.tree` files for a given tree, which are necessary to deserialize the data:
 
 For each `Version` addresses are:
-```
   - full tree: `s3://resources.ohnosequences.com/db/ncbitaxonomy/<inputVersion>`
   - good tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/good`
   - environmental tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/environmental`
   - unclassified tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/unclassified`
-```
 
 ## Release Code
 
-The method that should be used to release a new version is [`ohnosequences.db.taxonomy.release.mirrorNewVersion`], which has to be fed a `Version` object. That method: 
+The method that should be used to release a new version is `ohnosequences.db.taxonomy.release.mirrorNewVersion`, which has to be fed a `Version` object. That method: 
 * Creates the [`localFolder`][localFolder] structure to hold the data for all the taxonomic trees, except for the full one, in case is not already created. 
-* Downloads the full NCBI taxonomic tree in case is not already downloaded.
+* Downloads the full NCBI taxonomic tree in case it is not already downloaded.
 * Reads it.
 * Generates the good, environmental and unclassified trees.
 * Uploads them to the aforementioned S3 addresses.
