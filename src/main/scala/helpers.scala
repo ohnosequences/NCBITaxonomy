@@ -85,7 +85,7 @@ private[taxonomy] case object helpers {
     *
     * @param version the [[Version]] we want to generate
     * @return a Left(error) if something went wrong with any folder creation,
-    * otherswise a Right(files) where files is a collection of the created folders
+    * otherwise a Right(files) where files is a collection of the created folders
     */
   def createDirectories(version: Version): Error + Set[File] = {
     val dirsToCreate = TreeType.all.map { treeType =>
