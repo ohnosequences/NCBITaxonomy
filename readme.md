@@ -26,7 +26,7 @@ A *taxonomic node* is said to be:
   - `environmental` if its scientific name has prefix `environmental samples`.
   - `good` if its neither `unclassified` nor `environmental`.
 
-The *covering tree* of a set of nodes in a tree is defined as the node which includes all the ancestors and all the descendants for the nodes in that set.
+The *covering tree* of a set of nodes in a tree is defined as the subtree which includes all the ancestors and all the descendants for the nodes in that set.
 
 Having said that, we take the full taxonomic tree made available through [db.ncbitaxonomy][db.ncbitaxonomy] and we generate three other taxonomic trees from there:
   - A `good` taxonomic tree: given by nodes whose ancestors (including itself and up to the root) are neither unclassified nor environmental.
