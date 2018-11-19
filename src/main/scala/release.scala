@@ -83,33 +83,6 @@ case object release {
       }
   }
 
-  /** Uploads a collection of files to S3
-    *
-    * @param toUpload a collection of pairs `(File, S3Object)` with the file
-    * to upload and its desired S3 destination
-    *
-    * @return a Left(error) if something went wrong with any tree creation,
-    * otherwise a Right(objects) where objects is a collection of the uploaded
-    * objects
-    */
-  private def uploadTrees(
-      toUpload: Set[(File, S3Object)]): Error + Set[S3Object] =
-    toUpload
-      .map {
-        case (file, s3Obj) =>
-          upload(file, s3Obj)
-      }
-      .find { uploadResult =>
-        uploadResult.isLeft
-      }
-      .fold(
-        Right(toUpload.map { _._2 }): Error + Set[S3Object]
-      ) { err =>
-        err.map { _ =>
-          Set.empty[S3Object]
-        }
-      }
-
   /** Performs the mirroring of the tree data for the three following trees:
     * Good, Environmental, Unclassified
     *
@@ -149,27 +122,11 @@ case object release {
       localFiles <- downloadTreeIfNotInLocalFolder(version, TreeType.Full)
       fullTree   <- readTree(localFiles)
       toUpload   <- generateTreesFrom(fullTree, version)
-      result     <- uploadTrees(toUpload)
+      result     <- uploadFiles(toUpload)
     } yield {
       result
     }
   }
-
-  /**
-    * Finds any object under [[data.prefix(version)]] that could be overwritten
-    * by [[mirrorNewVersion]].
-    *
-    * @param version is the version that specifies the S3 folder
-    *
-    * @return Some(object) with the first object found under
-    * [[data.prefix(version)]] if any, None otherwise.
-    */
-  private def findVersionInS3(version: Version): Option[S3Object] =
-    data
-      .everything(version)
-      .find(
-        obj => objectExists(obj)
-      )
 
   /** Mirrors a new version of the taxonomy to S3 iff the upload does not
     * overwrite anything.

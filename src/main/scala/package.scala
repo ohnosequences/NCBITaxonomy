@@ -16,7 +16,7 @@ package object taxonomy {
     * @param treeType a [[TreeType]]
     *
     * @return a Left(error) if some error arises downloading the tree (if
-    * not already in the [[localFolder]] directory) or reading the downloaded
+    * not already in the [[data.localFolder]] directory) or reading the downloaded
     * files
     */
   def tree(version: Version, treeType: TreeType): Error + TaxTree = {
