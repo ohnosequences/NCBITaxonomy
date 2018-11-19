@@ -133,13 +133,13 @@ case object release {
     * files (a `data.tree` file and a `shape.tree` file per `TreeType`) if
     * everything went smoothly. Otherwise a Left(error), where error can be due
     * to:
-    * 
+    *
     *   - An error creating the directory structure
     *   - An error comparing the local tree files with the S3 ones or downloading
     *     the tree from S3 if it is not stored locally
     *   - An error reading the tree from the local files
     *   - An error uploading the Good, Environmental or Unclassified trees to S3
-    * 
+    *
     */
   private def mirrorVersion(version: Version): Error + Set[S3Object] = {
     val readTree = (readTaxTreeFromFiles _).tupled

@@ -3,6 +3,7 @@ package ohnosequences.db.taxonomy
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import ohnosequences.s3._
 import ohnosequences.files.directory.createDirectory
+import ohnosequences.db.ncbitaxonomy.io
 import java.io.File
 
 /**
@@ -103,4 +104,37 @@ private[taxonomy] case object helpers {
         err.left.map(Error.FileError).right.map(_ => Set.empty[File])
       }
   }
+
+  /** Reads taxonomic tree serialized into a `data` file and a `shape` file
+    *
+    * @param data the file for the tree data
+    * @param shape the file with the structure of nodes of the tree
+    *
+    * @return a Left(error) if some error arised reading the files (e.g. one
+    * or both of them do not exist), a Right(tree) otherwise
+    */
+  def readTaxTreeFromFiles(data: File, shape: File): Error + TaxTree =
+    io.readTaxTreeFromFiles(data, shape)
+      .left
+      .map { err =>
+        err.fold(Error.FileError, Error.SerializationError)
+      }
+
+  /** Dumps serialization for a taxonomic tree into a `data` file and a
+    * `shape` file
+    *
+    * @param tree a taxonomic tree
+    * @param data the file where we want to dump the tree data
+    * @param shape the file with the structure of nodes of the tree
+    *
+    * @return a Left(error) if some error arised writing to the files,
+    * a Right(files) where files is a tuple of files (data, shape) otherwise
+    */
+  def dumpTaxTreeToFiles(tree: TaxTree,
+                         data: File,
+                         shape: File): Error + (File, File) =
+    io.dumpTaxTreeToFiles(tree, data, shape)
+      .left
+      .map(Error.FileError)
+
 }

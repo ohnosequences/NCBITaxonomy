@@ -2,8 +2,6 @@ package ohnosequences.db
 
 import ohnosequences.db
 import ohnosequences.forests.Tree
-import java.io.File
-import db.ncbitaxonomy.io
 
 package object taxonomy {
   type +[A, B] = Either[A, B]
@@ -11,18 +9,25 @@ package object taxonomy {
   type TaxNode = db.ncbitaxonomy.TaxNode
   type TaxTree = Tree[TaxNode]
 
-  def readTaxTreeFromFiles(data: File, shape: File): Error + TaxTree =
-    io.readTaxTreeFromFiles(data, shape)
-      .left
-      .map { err =>
-        err.fold(Error.FileError, Error.SerializationError)
-      }
+  /** Returns the tree, if possible, for a version of the taxonomy and
+    * a kind of tree (Good, Environmental, Unclassified)
+    *
+    * @param version a [[Version]] of the taxonomy
+    * @param treeType a [[TreeType]]
+    *
+    * @return a Left(error) if some error arises downloading the tree (if
+    * not already in the [[localFolder]] directory) or reading the downloaded
+    * files
+    */
+  def tree(version: Version, treeType: TreeType): Error + TaxTree = {
+    val readTree = (helpers.readTaxTreeFromFiles _).tupled
 
-  def dumpTaxTreeToFiles(tree: TaxTree,
-                         data: File,
-                         shape: File): Error + (File, File) =
-    io.dumpTaxTreeToFiles(tree, data, shape)
-      .left
-      .map(Error.FileError)
-
+    for {
+      _     <- helpers.createDirectories(version)
+      files <- helpers.downloadTreeIfNotInLocalFolder(version, treeType)
+      tree  <- readTree(files)
+    } yield {
+      tree
+    }
+  }
 }
