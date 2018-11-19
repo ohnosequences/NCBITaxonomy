@@ -1,7 +1,6 @@
 // generic conf; don't change this file
 // pull particular versions from buildconf
-crossScalaVersions := Seq("2.11.11", "2.12.3")
-scalaVersion := crossScalaVersions.value.max
+scalaVersion := "2.12.6"
 
 dependencyOverrides += "org.scala-lang" % "scala-library" % scalaVersion.value
 
@@ -10,18 +9,18 @@ dependencyOverrides += "org.scala-lang" % "scala-library" % scalaVersion.value
 scalacOptions ++= Seq(
   "-Xsource:2.13",
   "-Xlint",
-  // "-Xfatal-warnings",
-  "-Xlog-reflective-calls",
-  // "-Ywarn-unused",
-  "-Ywarn-adapted-args",
-  "-opt-warnings:_",
   "-unchecked",
-  // "-Xstrict-inference",
-  "-Ywarn-unused-import",
   "-Yno-adapted-args",
-  "-Ydelambdafy:method",
-  "-Ybreak-cycles"
+  "-Ywarn-adapted-args",
+  "-Ywarn-unused-import",
+  "-Xlog-reflective-calls",
+  "-opt-warnings:_",
+  "-Ydelambdafy:method"
 )
+
+// scaladoc
+////////////////////////////////////////////////////////////////////////////////
+scalacOptions in (Compile, doc) ++= Seq("-groups", "-implicits", "-feature")
 
 addCompilerPlugin("ohnosequences" %% "contexts" % "0.5.0")
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +42,14 @@ wartremoverWarnings in (Compile, compile) := Warts.allBut(
   Wart.Nothing // needed because of the contexts compiler plugin
 )
 
-wartremoverExcluded += baseDirectory.value / "src" / "test" / "scala" / "generateTrees.scala"
+wartremoverErrors in (Test, compile) := Seq()
+
+wartremoverWarnings in (Test, compile) := Warts.allBut(
+  Wart.Equals,
+  Wart.FinalVal,
+  Wart.ImplicitConversion,
+  Wart.Nothing // needed because of the contexts compiler plugin
+)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Test configuration
@@ -57,6 +63,5 @@ parallelExecution in Test := false
 // publishing
 ////////////////////////////////////////////////////////////////////////////////
 bucketSuffix := "era7.com"
+awsProfile := s"${organization.value}/${name.value}"
 ////////////////////////////////////////////////////////////////////////////////
-
-// overriding!

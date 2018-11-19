@@ -1,34 +1,28 @@
 package ohnosequences.db
 
-import ohnosequences.awstools.s3._ // S3{Folder,Object} and s3"" string creation
+import ohnosequences.db
+import ohnosequences.forests.Tree
+import java.io.File
+import db.ncbitaxonomy.io
 
 package object taxonomy {
-  private[taxonomy] type +[A, B] =
-    Either[A, B]
+  type +[A, B] = Either[A, B]
 
-  type ScientificName =
-    String
+  type TaxNode = db.ncbitaxonomy.TaxNode
+  type TaxTree = Tree[TaxNode]
 
-  val version: String =
-    "0.4.0"
+  def readTaxTreeFromFiles(data: File, shape: File): Error + TaxTree =
+    io.readTaxTreeFromFiles(data, shape)
+      .left
+      .map { err =>
+        err.fold(Error.FileError, Error.SerializationError)
+      }
 
-  case object s3 {
-    val prefix: S3Folder =
-      s3"resources.ohnosequences.com" /
-        "db" /
-        "taxonomy" /
-        version /
+  def dumpTaxTreeToFiles(tree: TaxTree,
+                         data: File,
+                         shape: File): Error + (File, File) =
+    io.dumpTaxTreeToFiles(tree, data, shape)
+      .left
+      .map(Error.FileError)
 
-    val fullTree: S3Object =
-      prefix / "full.tree"
-
-    val environmentalTree: S3Object =
-      prefix / "environmental.tree"
-
-    val unclassifiedTree: S3Object =
-      prefix / "unclassified.tree"
-
-    val classifiedTree: S3Object =
-      prefix / "classified.tree"
-  }
 }
