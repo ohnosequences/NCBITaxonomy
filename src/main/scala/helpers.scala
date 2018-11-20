@@ -122,9 +122,7 @@ private[taxonomy] case object helpers {
   def readTaxTreeFromFiles(data: File, shape: File): Error + TaxTree =
     io.readTaxTreeFromFiles(data, shape)
       .left
-      .map { err =>
-        err.fold(Error.FileError, Error.SerializationError)
-      }
+      .map(Error.SerializationError)
 
   /** Dumps serialization for a taxonomic tree into a `data` file and a
     * `shape` file
@@ -141,7 +139,7 @@ private[taxonomy] case object helpers {
                          shape: File): Error + (File, File) =
     io.dumpTaxTreeToFiles(tree, data, shape)
       .left
-      .map(Error.FileError)
+      .map(Error.SerializationError)
 
   /**
     * Finds any object under [[data.prefix(version)]] that could be overwritten
