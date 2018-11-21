@@ -12,7 +12,7 @@ Fourth release of the package:
 The `ohnosequences.db.taxonomy.data.treeData` and `ohnosequences.db.taxonomy.data.treeShape` methods return, for a `Version` (which has an `inputVersion` of NCBI data) an S3 address for the `data.tree` and `shape.tree` files for a given tree, which are necessary to deserialize the data:
 
 For each `Version` addresses are:
-  - full tree: `s3://resources.ohnosequences.com/db/ncbitaxonomy/<inputVersion>`
+  - full tree: `s3://resources.ohnosequences.com/db/ncbitaxonomy/unstable/<inputVersion>`
   - good tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/good`
   - environmental tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/environmental`
   - unclassified tree: `s3://resources.ohnosequences.com/db/taxonomy/unstable/<version>/unclassified`
@@ -30,11 +30,11 @@ The method that should be used to release a new version is `ohnosequences.db.tax
 
 The process to add a new version and release the data is as follows:
 
-1. Add a new `object` that extends `Version` in [`src/main/scala/data.scala`](https://github.com/ohnosequences/db.taxonomy/blob/v0.4.0/src/main/scala/data.scala); e.g., `case object v4_0_0 extends Version("0.4.0")`, adding the input version from [`db.ncbitaxonomy`][db.ncbitaxonomy].
+1. Add a new `object` that extends `Version` in [`src/main/scala/data.scala`](https://github.com/ohnosequences/db.taxonomy/blob/v0.4.0/src/main/scala/data.scala); e.g., `case object v0_4_0 extends Version("0.4.0")`, adding the input version from [`db.ncbitaxonomy`][db.ncbitaxonomy].
 2. Release the data through the method [`release.mirrorNewVersion`](https://github.com/ohnosequences/db.taxonomy/blob/v0.4.0/src/main/scala/release.scala#L186); e.g., through an `sbt console`:
 ```scala
 scala> import ohnosequences.db.taxonomy._
-scala> release.mirrorNewVersion(Version.v4_0_0)
+scala> release.mirrorNewVersion(Version.v0_4_0)
 ```
 3. Prepare a new release of the repository by writing release notes in the corresponding file in [`notes`](https://github.com/ohnosequences/db.taxonomy/blob/v0.4.0/notes); e.g. in `notes/0.4.0.markdown`
 4. Make the release of the repository, that checks that all declared versions of the data exist and are correct. This is done through the `sbt` `release` task; e.g., with `sbt release minor`.
