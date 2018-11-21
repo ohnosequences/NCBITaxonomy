@@ -1,7 +1,7 @@
 package ohnosequences.db.taxonomy.test
 
 import org.scalatest.FunSuite
-import ohnosequences.db.taxonomy.Version
+import ohnosequences.db.taxonomy, taxonomy.{TreeType, Version}
 import ohnosequences.forests._
 import org.scalatest.EitherValues._
 
@@ -9,9 +9,9 @@ class AreTrees extends FunSuite {
 
   test("All versions have valid trees") {
     Version.all foreach { version =>
-      val trees = data.trees(version)
+      TreeType.all.foreach { treeType =>
+        val tree = taxonomy.tree(version, treeType).right.value
 
-      trees.right.value.foreach { tree =>
         assert(tree.isWellFormed, s"- Version $version has invalid tree(s)")
       }
     }

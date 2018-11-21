@@ -2,7 +2,7 @@ package ohnosequences.db.taxonomy
 
 import ohnosequences.files
 import ohnosequences.s3
-import ohnosequences.forests
+import ohnosequences.db.ncbitaxonomy
 
 sealed abstract class Error {
   def msg: String
@@ -18,7 +18,8 @@ case object Error {
     val msg = err.msg
   }
 
-  final case class SerializationError(val err: forests.IOError) extends Error {
+  final case class SerializationError(val err: ncbitaxonomy.Error)
+      extends Error {
     val msg = err.msg
   }
 

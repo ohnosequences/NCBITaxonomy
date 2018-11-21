@@ -1,8 +1,7 @@
 package ohnosequences.db.taxonomy
 
-import ohnosequences.db
-import db.ncbitaxonomy.{Version => NCBIVersion}
-import ohnosequences.db.ncbitaxonomy, ncbitaxonomy.{treeDataFile, treeShapeFile}
+import ohnosequences.db.ncbitaxonomy
+import ncbitaxonomy.{Version => NCBIVersion, treeDataFile, treeShapeFile}
 import ohnosequences.files.digest.DigestFunction
 import ohnosequences.s3._
 import java.io.File
