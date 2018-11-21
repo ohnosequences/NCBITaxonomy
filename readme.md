@@ -1,6 +1,5 @@
 # db.taxonomy
 
-[![](http://github-release-version.herokuapp.com/github/ohnosequences/db.taxonomy/release.svg)](https://github.com/ohnosequences/db.fragments16s/releases/latest)
 [![](https://img.shields.io/badge/license-AGPLv3-blue.svg)](https://tldrlegal.com/license/gnu-affero-general-public-license-v3-%28agpl-3.0%29)
 [![](https://img.shields.io/badge/license-ODbL-brightgreen.svg)](https://opendatacommons.org/licenses/odbl/)
 
