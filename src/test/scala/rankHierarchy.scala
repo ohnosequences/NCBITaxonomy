@@ -26,7 +26,7 @@ class RankHierarchy extends FunSuite {
     recUntilRoot(initialPos)
   }
 
-  test("All versions have valid trees") {
+  test("All versions trees respect the Rank hierarchy") {
     val orderedRanks = List[Rank](
       Rank.Superkingdom,
       Rank.Kingdom,
