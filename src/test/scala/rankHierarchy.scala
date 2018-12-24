@@ -85,11 +85,11 @@ class RankHierarchy extends FunSuite {
 
             assert(
               numBadNodes == 0,
-              s"""- Version $version, tree $treeType contains
-              | $numBadNodes nodes that break the hierarchy; i.e., the closest
-              | ancestor of those nodes with a meaningful rank (different than
-              |  NoRank) is of a rank more specific than the node's rank (e.g.,
-              | the node's Rank is Species and the ancestor's rank is
+              s"""- Version $version, tree $treeType contains $numBadNodes
+              | nodes that break the hierarchy; i.e., the closest ancestor of
+              | those nodes with a meaningful rank (different than NoRank) is
+              | of a rank more specific than the node's rank (e.g., the node's
+              | Rank is Species and the ancestor's rank is
               | Forma).""".stripMargin.replaceAll("/n", "")
             )
         }
