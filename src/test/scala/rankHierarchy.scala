@@ -27,37 +27,7 @@ class RankHierarchy extends FunSuite {
   }
 
   test("All versions trees respect the Rank hierarchy") {
-    val orderedRanks = List[Rank](
-      Rank.Superkingdom,
-      Rank.Kingdom,
-      Rank.Subkingdom,
-      Rank.Superphylum,
-      Rank.Phylum,
-      Rank.Subphylum,
-      Rank.Superclass,
-      Rank.Class,
-      Rank.Subclass,
-      Rank.Infraclass,
-      Rank.Cohort,
-      Rank.Superorder,
-      Rank.Order,
-      Rank.Suborder,
-      Rank.Infraorder,
-      Rank.Parvorder,
-      Rank.Superfamily,
-      Rank.Family,
-      Rank.Subfamily,
-      Rank.Tribe,
-      Rank.Subtribe,
-      Rank.Genus,
-      Rank.Subgenus,
-      Rank.SpeciesGroup,
-      Rank.SpeciesSubgroup,
-      Rank.Species,
-      Rank.Subspecies,
-      Rank.Varietas,
-      Rank.Forma
-    )
+    val orderedRanks = Rank.orderedList
 
     Version.all foreach { version =>
       TreeType.all.foreach { treeType =>

@@ -1,5 +1,5 @@
 libraryDependencies ++= Seq(
-  "ohnosequences" %% "db-ncbitaxonomy" % "0.2.0"
+  "ohnosequences" %% "db-ncbitaxonomy" % "0.2.1"
 ) ++ testDependencies
 
 val testDependencies = Seq(
