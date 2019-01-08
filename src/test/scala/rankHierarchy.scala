@@ -8,6 +8,17 @@ import org.scalatest.EitherValues._
 
 class RankHierarchy extends FunSuite {
 
+  /**
+    * Returns, if any, the closest ancestor of a node in a tree whose rank is
+    * different than NoRank
+    *
+    * @param tree is the tree where the ancestor will be searched
+    * @param initialPos is the position of the node whose ancestors will be
+    * queried
+    *
+    * @return an `Option[TaxNode]`, `None` if no ancestor with rank was found or
+    * `Some(node)` with the first ancestor with rank if it exists.
+    */
   def closestAncestorWithRank(
       tree: NonEmptyTree[TaxNode],
       initialPos: TreePosition
@@ -26,6 +37,11 @@ class RankHierarchy extends FunSuite {
     recUntilRoot(initialPos)
   }
 
+  /**
+    * Checks whether all trees respect the Rank hierarchy; i.e., the ancestors
+    * of every node have ranks less specific (or equal) of the node's rank,
+    * skipping all nodes with rank NoRank.
+    */
   test("All versions trees respect the Rank hierarchy") {
     val orderedRanks = Rank.orderedList
 
