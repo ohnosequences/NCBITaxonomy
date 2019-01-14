@@ -34,13 +34,16 @@ class RankHierarchy extends FunSuite {
             recUntilRoot(Tree.parentPosition(tree, pos))
       }
 
-    recUntilRoot(initialPos)
+    recUntilRoot(Tree.parentPosition(tree, initialPos))
   }
 
   /**
     * Checks whether all trees respect the Rank hierarchy; i.e., the ancestors
     * of every node have ranks less specific (or equal) of the node's rank,
     * skipping all nodes with rank NoRank.
+    *
+    * @note we accept nodes whose ancestors have equal rank, as it does happen
+    * in the taxonomy.
     */
   test("All versions trees respect the Rank hierarchy") {
     val orderedRanks = Rank.orderedList
